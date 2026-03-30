@@ -1074,8 +1074,7 @@ let tvClkTimer=null, isAdmin=false, tvOn=false, scrollOn=false;
 
 let events=[];
 const save=()=>{
-  fetch('/api/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(events)})
-    .catch(()=>{try{localStorage.setItem(STORE_KEY,JSON.stringify(events));}catch(e){}});
+  try{localStorage.setItem(STORE_KEY,JSON.stringify(events));}catch(e){}
   bc.postMessage({type:'eventsUpdate',events});
 };
 const nid=()=>events.length?Math.max(...events.map(e=>e.id))+1:1;
@@ -1203,16 +1202,11 @@ const TV_TH=`<thead><tr>
 </tr></thead>`;
 
 async function renderAll(){
-  // Load events từ server (nếu chạy qua LAN server)
-  try{
-    const r=await fetch('/api/load');
-    if(r.ok){const d=await r.json();if(Array.isArray(d)&&d.length>=0)events=d;}
-    else{throw 0;}
-  }catch{
-    // Fallback: dùng localStorage nếu không có server
-    try{const r=localStorage.getItem(STORE_KEY);if(r)events=JSON.parse(r);}catch{}
-    if(!events||!events.length)events=samples();
-  }
+  // Load events từ localStorage
+  // Chỉ load mẫu nếu chưa từng lưu (key chưa tồn tại) — không load mẫu khi đã xoá hết
+  const _stored=localStorage.getItem(STORE_KEY);
+  if(_stored!==null){try{events=JSON.parse(_stored)||[];}catch{events=[];}}
+  else{events=samples();}
   const ws=wkStart(wkOff);const we=addDays(ws,6);const wn=wkNum(ws);
   let wxd=null;
   try{wxd=await fetchWx();}catch(e){wxd=null;}
@@ -1888,12 +1882,9 @@ function delCurEv(){if(!editId||!confirm('Xoá lịch này?'))return;events=even
 async function clearAll(){
   if(!confirm('Xoá TOÀN BỘ lịch? Không thể hoàn tác!'))return;
   events=[];
-  // Lưu lên server trước
-  try{await fetch('/api/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify([])});}
-  catch{try{localStorage.setItem(STORE_KEY,JSON.stringify([]));}catch(e){}}
+  try{localStorage.setItem(STORE_KEY,JSON.stringify([]));}catch(e){}
   bc.postMessage({type:'eventsUpdate',events:[]});
   closeAdd();
-  // Render trực tiếp không load lại từ server
   renderAllNoFetch();
 }
 
