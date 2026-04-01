@@ -1,0 +1,32 @@
+# THÊM donvi_slugs VÀO FIREBASE REALTIME DATABASE
+# ════════════════════════════════════════════════
+# Ka vào Realtime Database → bấm + ở gốc → tạo node "donvi_slugs"
+# Rồi thêm từng cặp slug → UID như sau:
+#
+# donvi_slugs
+#   ├── taytrabong  :  "jSgnpibQwNNZFMB8T5ATA5Eb2fy2"   ← UID xã Tây Trà Bồng
+#   ├── trabung     :  "hK9mXpQ2TbRvLsA4NcF7dHj0eYu"    ← UID xã Trà Bùng
+#   ├── tragiang    :  "wRz4vLsA8NcF7dHj0eYuK9mXpQ2T"   ← UID xã Trà Giang
+#   └── ...
+#
+# Cách thêm:
+# 1. Bấm + vào donvi_slugs
+# 2. NAME = taytrabong  (tên slug — chữ thường, không dấu)
+# 3. VALUE = jSgnpibQwNNZFMB8T5ATA5Eb2fy2  (UID của xã đó)
+# 4. Lặp lại cho mỗi xã
+#
+# Sau khi xong, cấu trúc Database đầy đủ:
+#
+# lichxattbong-default-rtdb
+# ├── lcttb/events/...
+# ├── donvi/
+# │    ├── {UID_taytrabong}/info/{ tenCoQuan, tenNgan... }
+# │    ├── {UID_taytrabong}/events/{ ... }
+# │    └── {UID_trabung}/info/{ ... }
+# └── donvi_slugs/
+#      ├── taytrabong: "{UID_taytrabong}"
+#      └── trabung:    "{UID_trabung}"
+#
+# URL hoạt động:
+#   lichlamviec.com.vn/taytrabong  → app tự load lịch Xã Tây Trà Bồng
+#   lichlamviec.com.vn/trabung     → app tự load lịch Xã Trà Bùng
