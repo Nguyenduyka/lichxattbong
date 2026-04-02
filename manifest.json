@@ -1,0 +1,16 @@
+{
+  "name": "Lịch Làm Việc Số – UBND Xã Tây Trà Bồng",
+  "short_name": "Lịch LV Số",
+  "description": "Lịch làm việc tuần của UBND Xã Tây Trà Bồng",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f1ec",
+  "theme_color": "#c0392b",
+  "orientation": "any",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-144.png", "sizes": "144x144", "type": "image/png" },
+    { "src": "icons/icon-152.png", "sizes": "152x152", "type": "image/png" }
+  ]
+}
