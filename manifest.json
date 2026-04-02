@@ -1,7 +1,7 @@
 {
-  "name": "Lịch Làm Việc Số – UBND Xã Tây Trà Bồng",
-  "short_name": "Lịch LV Số",
-  "description": "Lịch làm việc tuần của UBND Xã Tây Trà Bồng",
+  "name": "Lịch làm việc số – UBND xã Tây Trà Bồng",
+  "short_name": "Lịch làm việc số",
+  "description": "Lịch làm việc của UBND xã Tây Trà Bồng",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f5f1ec",
