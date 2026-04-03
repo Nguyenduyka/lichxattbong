@@ -1,12 +1,11 @@
 // ════════════════════════════════════════
 // SERVICE WORKER – Lịch làm việc số
-// Hỗ trợ: FCM background push + App Badge (iOS 16.4+)
+// Badge: iOS 16.4+ (setAppBadge) + Android (notification count)
 // ════════════════════════════════════════
 
 importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
 
-// ── Firebase config (phải khớp với index.html) ──
 firebase.initializeApp({
   apiKey: "AIzaSyBRBEqHmR9Anezw06LVNjPdewTxoB-4Wag",
   authDomain: "lichxattbong.firebaseapp.com",
@@ -18,61 +17,85 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
-
-// ── Cache version ──
-const CACHE_NAME = 'lich-v1';
+const CACHE_NAME = 'lich-v2';
+const ORIGIN = self.location.origin;
 
 // ════════════════════════════════════════
 // INSTALL & ACTIVATE
 // ════════════════════════════════════════
-self.addEventListener('install', e => {
-  self.skipWaiting();
-});
+self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-    ).then(() => self.clients.claim())
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
 });
 
+function isAndroid() {
+  return /android/i.test(self.navigator.userAgent);
+}
+
 // ════════════════════════════════════════
 // FCM BACKGROUND MESSAGE
-// Khi app đóng hoặc background → SW nhận push và hiển thị notification
 // ════════════════════════════════════════
 messaging.onBackgroundMessage(payload => {
-  console.log('[SW] Background message:', payload);
-
-  const data = payload.data || {};
+  const data  = payload.data || {};
   const count = parseInt(data.count) || 1;
-  const title = data.title || '📅 Lịch làm việc số';
-  const body  = data.body  || ('Có ' + count + ' lịch mới được cập nhật');
+  const title = data.title || 'Lịch lam viec so';
+  const body  = data.body  || ('Co ' + count + ' lich moi duoc cap nhat');
 
-  // Cập nhật App Badge (số đỏ trên icon – iOS 16.4+)
+  // iOS: setAppBadge
   if ('setAppBadge' in self.navigator) {
     self.navigator.setAppBadge(count).catch(() => {});
   }
-
-  // Lưu count vào IndexedDB để app đọc lại khi mở
   setBadgeCount(count);
 
-  // Hiển thị notification
   const options = {
     body,
-    icon: '/icons/icon-192.png',
-    badge: '/icons/icon-72.png',
-    tag: 'lich-update',
+    icon    : '/icons/icon-192.png',
+    badge   : '/icons/icon-72.png',
+    tag     : 'lich-update',
     renotify: true,
-    data: { url: self.location.origin, count },
-    actions: [
-      { action: 'open', title: '📋 Xem lịch' },
-      { action: 'dismiss', title: 'Bỏ qua' }
-    ],
-    vibrate: [200, 100, 200]
+    silent  : false,
+    data    : { url: ORIGIN, count },
+    vibrate : [200, 100, 200],
+    timestamp: Date.now(),
+    actions : [
+      { action: 'open',    title: 'Xem lich' },
+      { action: 'dismiss', title: 'Bo qua'   }
+    ]
   };
 
   return self.registration.showNotification(title, options);
+});
+
+// ════════════════════════════════════════
+// PUSH FALLBACK
+// ════════════════════════════════════════
+self.addEventListener('push', e => {
+  if (!e.data) return;
+  let payload;
+  try { payload = e.data.json(); } catch { return; }
+  if (payload.fcmMessageId || (payload.data && payload.data['google.c.a.e'])) return;
+
+  const data  = payload.data || {};
+  const notif = payload.notification || {};
+  const count = parseInt(data.count) || 1;
+  const title = notif.title || data.title || 'Lich lam viec so';
+  const body  = notif.body  || data.body  || ('Co ' + count + ' lich moi');
+
+  if ('setAppBadge' in self.navigator) self.navigator.setAppBadge(count).catch(() => {});
+  setBadgeCount(count);
+
+  e.waitUntil(
+    self.registration.showNotification(title, {
+      body, icon: '/icons/icon-192.png', badge: '/icons/icon-72.png',
+      tag: 'lich-update', renotify: true, vibrate: [200, 100, 200],
+      data: { url: ORIGIN, count }
+    })
+  );
 });
 
 // ════════════════════════════════════════
@@ -80,48 +103,59 @@ messaging.onBackgroundMessage(payload => {
 // ════════════════════════════════════════
 self.addEventListener('notificationclick', e => {
   e.notification.close();
-
   if (e.action === 'dismiss') return;
 
-  const url = (e.notification.data && e.notification.data.url) || self.location.origin;
+  const targetUrl = (e.notification.data && e.notification.data.url) || ORIGIN;
 
   e.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
-      // Nếu đã có tab mở → focus và xóa badge
-      const existing = clients.find(c => c.url.startsWith(self.location.origin));
+      const existing = clients.find(c => c.url.startsWith(ORIGIN));
       if (existing) {
         existing.focus();
-        existing.postMessage({ type: 'CLEAR_BADGE' });
         if ('clearAppBadge' in self.navigator) self.navigator.clearAppBadge().catch(() => {});
+        setBadgeCount(0);
+        existing.postMessage({ type: 'CLEAR_BADGE' });
         return;
       }
-      // Chưa có → mở tab mới
-      return self.clients.openWindow(url);
+      return self.clients.openWindow(targetUrl).then(client => {
+        if (!client) return;
+        if ('clearAppBadge' in self.navigator) self.navigator.clearAppBadge().catch(() => {});
+        setBadgeCount(0);
+      });
     })
   );
 });
 
 // ════════════════════════════════════════
-// MESSAGES TỪ APP (postMessage)
+// NOTIFICATION CLOSE (Android: user vuot bo)
+// ════════════════════════════════════════
+self.addEventListener('notificationclose', () => {
+  if ('clearAppBadge' in self.navigator) self.navigator.clearAppBadge().catch(() => {});
+  setBadgeCount(0);
+});
+
+// ════════════════════════════════════════
+// MESSAGES TU APP
 // ════════════════════════════════════════
 self.addEventListener('message', e => {
   if (!e.data) return;
-
   switch (e.data.type) {
     case 'SET_BADGE': {
       const count = e.data.count || 0;
       if ('setAppBadge' in self.navigator) {
-        if (count > 0) self.navigator.setAppBadge(count).catch(() => {});
-        else self.navigator.clearAppBadge().catch(() => {});
+        count > 0 ? self.navigator.setAppBadge(count).catch(() => {})
+                  : self.navigator.clearAppBadge().catch(() => {});
       }
       setBadgeCount(count);
+      // Android: tao notification de badge so hien
+      if (count > 0 && isAndroid()) showSilentAndroidBadge(count);
       break;
     }
     case 'CLEAR_BADGE': {
-      if ('clearAppBadge' in self.navigator) {
-        self.navigator.clearAppBadge().catch(() => {});
-      }
+      if ('clearAppBadge' in self.navigator) self.navigator.clearAppBadge().catch(() => {});
       setBadgeCount(0);
+      self.registration.getNotifications({ tag: 'lich-update' })
+        .then(ns => ns.forEach(n => n.close())).catch(() => {});
       break;
     }
     case 'SKIP_WAITING':
@@ -131,53 +165,33 @@ self.addEventListener('message', e => {
 });
 
 // ════════════════════════════════════════
-// PUSH EVENT (fallback nếu FCM không handle được)
+// ANDROID: notification silent de co badge so
+// Android badge so = so notification chua doc
 // ════════════════════════════════════════
-self.addEventListener('push', e => {
-  // FCM onBackgroundMessage sẽ xử lý trường hợp có data
-  // Push event này chỉ là fallback cho trường hợp không có data
-  if (!e.data) return;
-
-  let payload;
-  try { payload = e.data.json(); } catch { return; }
-
-  // Nếu FCM đã xử lý thì bỏ qua
-  if (payload.data && payload.data.google) return;
-
-  const count = (payload.data && parseInt(payload.data.count)) || 1;
-  const title = (payload.notification && payload.notification.title) || '📅 Lịch làm việc số';
-  const body  = (payload.notification && payload.notification.body)  || ('Có ' + count + ' lịch mới');
-
-  if ('setAppBadge' in self.navigator) {
-    self.navigator.setAppBadge(count).catch(() => {});
-  }
-
-  e.waitUntil(
-    self.registration.showNotification(title, {
-      body,
-      icon: '/icons/icon-192.png',
-      badge: '/icons/icon-72.png',
-      tag: 'lich-update',
-      renotify: true,
-      data: { count }
-    })
-  );
-});
+async function showSilentAndroidBadge(count) {
+  try {
+    const existing = await self.registration.getNotifications({ tag: 'lich-update' });
+    if (existing.length > 0) return;
+    await self.registration.showNotification('Lich lam viec so', {
+      body  : 'Co ' + count + ' lich moi duoc cap nhat',
+      icon  : '/icons/icon-192.png',
+      badge : '/icons/icon-72.png',
+      tag   : 'lich-update',
+      silent: true,
+      data  : { url: ORIGIN, count }
+    });
+  } catch(e) {}
+}
 
 // ════════════════════════════════════════
-// HELPER: lưu badge count vào IndexedDB
-// (dùng để app đọc lại khi foreground)
+// INDEXEDDB: luu badge count
 // ════════════════════════════════════════
 function setBadgeCount(count) {
   try {
     const req = indexedDB.open('lcttb_badge', 1);
-    req.onupgradeneeded = e => {
-      e.target.result.createObjectStore('kv');
-    };
+    req.onupgradeneeded = e => e.target.result.createObjectStore('kv');
     req.onsuccess = e => {
-      const db = e.target.result;
-      const tx = db.transaction('kv', 'readwrite');
-      tx.objectStore('kv').put(count, 'badge_count');
+      e.target.result.transaction('kv', 'readwrite').objectStore('kv').put(count, 'badge_count');
     };
   } catch(err) {}
 }
