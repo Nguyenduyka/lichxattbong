@@ -783,6 +783,7 @@ fbReady=true;
 await _loadViewerData();
 // Theo dõi đăng nhập admin
 fbAuth.onAuthStateChanged(async user=>{
+try{
 if(user){
 currentUID=user.uid;
 fbRef=fbDb.ref(‘donvi/’+user.uid+’/events’);
@@ -819,6 +820,13 @@ document.body.classList.remove(‘is-admin’);
 try{localStorage.removeItem(‘lcttb_auth’);}catch(e){}
 // KHÔNG reset events — viewer data vẫn có
 renderAllNoFetch();
+if(_autoTV&&!tvOn){setTimeout(()=>{startTV();try{bc.postMessage({type:‘tvOn’});}catch(e){}},500);}
+}
+}catch(e){
+// Firebase Auth lỗi trên tivi → vẫn load viewer data và bật TV
+try{await _loadViewerData();}catch(e2){}
+renderAllNoFetch();
+if(_autoTV&&!tvOn){setTimeout(()=>{startTV();try{bc.postMessage({type:‘tvOn’});}catch(e2){}},500);}
 }
 });
 }catch(e){fbReady=false;}
@@ -1973,7 +1981,7 @@ if(tvOn){stopTV();try{bc.postMessage({type:‘tvOff’});}catch(e){}}
 // ════════════════════════════════════════
 // ADD/EDIT EVENT
 // ════════════════════════════════════════
-let _isHoan=false, _isChuyen=false, _origDate=null;
+let _isHoan=false, _isChuyen=false, _origDate=null, _origSes=null;
 
 function toggleHoanBtn(){
 _isHoan=!_isHoan;
@@ -2004,8 +2012,9 @@ function toggleChuyenBtn(){
 if(!_isHoan) return;
 // Lấy ngày đang chọn trên ô Ngày của form
 const newDate=document.getElementById(‘fD’).value;
-if(!newDate||newDate===_origDate){
-alert(‘Vui lòng chọn ngày khác với ngày hiện tại của lịch trước khi chuyển!’);
+const newSes=document.getElementById(‘fSes’).value;
+if(!newDate||(newDate===_origDate&&newSes===_origSes)){
+alert(‘Vui lòng chọn ngày hoặc buổi khác với lịch hiện tại trước khi chuyển!’);
 return;
 }
 // Đánh dấu chuyển, làm mờ nút — bấm Lưu lịch mới thực sự chuyển
@@ -2036,7 +2045,7 @@ const _hoanLbl=document.getElementById(‘fHoanLabel’);
 if(_hoanLbl) _hoanLbl.style.display=‘none’;
 resetHoanChuyen();
 resetLapLai();
-_origDate=null;
+_origDate=null; _origSes=null;
 const _lapRow=document.getElementById(‘fLapLaiRow’);
 if(_lapRow) _lapRow.style.display=’’;
 // Populate dropdown ngày theo tuần đang xem
@@ -2091,6 +2100,7 @@ _eFd.innerHTML=’’;
 for(let i=0;i<7;i++){const _d=addDays(_eWs,i);const _iso=iso(_d);const _opt=document.createElement(‘option’);_opt.value=_iso;_opt.textContent=`${_eVn[_d.getDay()]} – ${String(_d.getDate()).padStart(2,'0')}/${String(_d.getMonth()+1).padStart(2,'0')}/${_d.getFullYear()}`;_eFd.appendChild(_opt);}
 _eFd.value=e.date||’’;
 _origDate=e.date||null;
+_origSes=e.ses||‘sang’;
 document.getElementById(‘fSes’).value=e.ses||‘sang’;
 document.getElementById(‘fC’).value=e.cat||‘hop’;
 document.getElementById(‘fS’).value=e.time||’’;
@@ -2126,7 +2136,8 @@ hoan:0  // mặc định 0, sẽ override bên dưới nếu cần
 // ── TRƯỜNG HỢP: Hoãn + Chuyển ngày (sửa lịch, có chọn ngày chuyển) ──
 if(editId && _isHoan && _isChuyen){
 const newDate=document.getElementById(‘fD’).value;
-if(!newDate||newDate===_origDate){alert(‘Vui lòng chọn ngày khác với ngày gốc!’);return;}
+const _newSes=document.getElementById(‘fSes’).value;
+if(!newDate||(newDate===_origDate&&_newSes===_origSes)){alert(‘Vui lòng chọn ngày hoặc buổi khác với lịch gốc!’);return;}
 // Lịch cũ: đánh dấu Hoãn, giữ nguyên ngày gốc
 const oldEv=Object.assign({},baseEv,{id:editId,date:_origDate,hoan:true,isNew:0});
 events[events.findIndex(x=>x.id===editId)]=oldEv;
