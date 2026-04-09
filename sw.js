@@ -86,3 +86,29 @@ self.addEventListener('notificationclick', function(event) {
       })
   );
 });
+ 
+// ── Web Push cho iOS Safari (không qua FCM) ───────────────────────────
+self.addEventListener('push', function(event) {
+  if (!event.data) return;
+  var data = {};
+  try { data = event.data.json(); } catch(e) { data = { msg: event.data.text() }; }
+ 
+  var count = parseInt(data.count || 0);
+  var msg   = data.msg || '📅 Lịch Làm Việc Số cập nhật';
+ 
+  // Set badge iOS
+  if ('setAppBadge' in self && count > 0) {
+    self.setAppBadge(count).catch(function(){});
+  }
+ 
+  event.waitUntil(
+    self.registration.showNotification('📅 Lịch Làm Việc Số', {
+      body: msg,
+      icon: '/icons/icon-192.png',
+      badge: '/icons/icon-72.png',
+      tag: 'lich-lam-viec',
+      renotify: true,
+      data: { url: APP_URL, count: count }
+    })
+  );
+});
