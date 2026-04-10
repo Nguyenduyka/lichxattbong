@@ -32,11 +32,13 @@ self.addEventListener('message', function(event) {
 // ── Click notification → focus hoặc mở app ───────────────────
 self.addEventListener('notificationclick', function(event) {
   event.notification.close();
-  // Xoá badge
-  if ('clearAppBadge' in self) self.clearAppBadge().catch(function(){});
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true })
       .then(function(list) {
+        // Báo cho app biết: mở qua click notification → không xóa badge
+        list.forEach(function(c){
+          try{ c.postMessage({ type: 'NOTIF_CLICKED' }); } catch(e){}
+        });
         for (var i = 0; i < list.length; i++) {
           if (list[i].url.indexOf('lichlamviec.com.vn') >= 0 && 'focus' in list[i]) {
             return list[i].focus();
