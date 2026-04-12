@@ -1,3 +1,6 @@
+
+Copy
+
 // ══════════════════════════════════════════════════════════════
 // SERVICE WORKER – Lịch Làm Việc Số
 // Chức năng: SET_BADGE từ trang + click notification mở app
@@ -15,17 +18,19 @@ self.addEventListener('message', function(event) {
   if (!event.data) return;
   if (event.data.type === 'SET_BADGE') {
     var n = parseInt(event.data.count) || 0;
-    // iOS PWA: dùng self.setAppBadge
+    // iOS PWA: self.setAppBadge có trong SW context
     if ('setAppBadge' in self) {
       if (n > 0) self.setAppBadge(n).catch(function(){});
       else        self.clearAppBadge().catch(function(){});
-      return;
     }
-    // Android: dùng navigator.setAppBadge trong SW
-    if ('setAppBadge' in self.navigator) {
-      if (n > 0) self.navigator.setAppBadge(n).catch(function(){});
-      else        self.navigator.clearAppBadge().catch(function(){});
-    }
+    // Android Chrome: navigator.setAppBadge KHÔNG có trong SW
+    // → báo lại tất cả tab foreground để tự gọi navigator.setAppBadge
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then(function(list) {
+        list.forEach(function(c) {
+          try { c.postMessage({ type: 'DO_BADGE', count: n }); } catch(e) {}
+        });
+      });
   }
 });
  
