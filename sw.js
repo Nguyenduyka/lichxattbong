@@ -41,15 +41,20 @@ self.addEventListener('message', e => {
  
   if (type === 'SET_BADGE') {
     const n = parseInt(count) || 0;
-    if ('setAppBadge' in self.navigator) {
-      if (n > 0) self.navigator.setAppBadge(n).catch(() => {});
-      else self.navigator.clearAppBadge().catch(() => {});
+    // navigator.setAppBadge là cách đúng trong SW (không dùng self.navigator)
+    if ('setAppBadge' in navigator) {
+      if (n > 0) navigator.setAppBadge(n).catch(() => {});
+      else navigator.clearAppBadge().catch(() => {});
     }
+    // Fallback: relay cho tất cả client để trang tự gọi
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then(clients => clients.forEach(c => c.postMessage({ type: 'BADGE_SET', count: n })))
+      .catch(() => {});
   }
  
   if (type === 'CLEAR_BADGE') {
-    if ('setAppBadge' in self.navigator) {
-      self.navigator.clearAppBadge().catch(() => {});
+    if ('setAppBadge' in navigator) {
+      navigator.clearAppBadge().catch(() => {});
     }
     // Đóng tất cả notification cũ có tag lich-update
     self.registration.getNotifications({ tag: 'lich-update' })
@@ -79,8 +84,8 @@ self.addEventListener('push', e => {
   }
  
   // Hiện badge trên icon
-  if ('setAppBadge' in self.navigator) {
-    self.navigator.setAppBadge(count).catch(() => {});
+  if ('setAppBadge' in navigator) {
+    navigator.setAppBadge(count).catch(() => {});
   }
  
   e.waitUntil(
