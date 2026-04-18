@@ -58,21 +58,57 @@ self.addEventListener('message', e => {
   if (type === 'SKIP_WAITING') self.skipWaiting();
 });
  
+ 
+// ── PUSH EVENT – set badge khi nhận push (app background/closed, iOS & Android) ──
+self.addEventListener('push', e => {
+  let count = 1;
+  try {
+    const d = e.data ? e.data.json() : {};
+    count = parseInt(
+      (d.custom && d.custom.a && d.custom.a.count) ||
+      (d.data && d.data.count) || 1
+    ) || 1;
+  } catch(_) {}
+ 
+  // Đọc badge hiện tại từ SW cache rồi tăng lên
+  const p = self.caches.open('llv-badge').then(c =>
+    c.match('badge-count').then(r => r ? r.text() : '0')
+  ).then(cur => {
+    const next = (parseInt(cur)||0) + count;
+    // Lưu lại
+    return self.caches.open('llv-badge').then(c =>
+      c.put('badge-count', new Response(String(next)))
+    ).then(() => next);
+  }).then(next => {
+    // setAppBadge trong push event context — iOS Safari & Android Chrome đều hỗ trợ
+    if ('setAppBadge' in self) return self.setAppBadge(next).catch(()=>{});
+  }).catch(()=>{});
+ 
+  e.waitUntil(p);
+});
+ 
 // ── NOTIFICATION CLICK ─────────────────────────
 self.addEventListener('notificationclick', e => {
   e.notification.close();
   const target = (e.notification.data && e.notification.data.url)
     ? e.notification.data.url : self.registration.scope;
   e.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true })
-      .then(clients => {
-        for (const c of clients) {
-          if (c.url.startsWith(self.registration.scope) && 'focus' in c) {
-            c.postMessage({ type: 'NOTIF_CLICKED' });
-            return c.focus();
+    // Xóa badge khi user click thông báo
+    Promise.all([
+      self.caches.open('llv-badge').then(c => c.put('badge-count', new Response('0'))),
+      ('setAppBadge' in self) ? self.clearAppBadge().catch(()=>{}) : Promise.resolve()
+    ]).then(() =>
+      self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+        .then(clients => {
+          for (const c of clients) {
+            if (c.url.startsWith(self.registration.scope) && 'focus' in c) {
+              c.postMessage({ type: 'NOTIF_CLICKED' });
+              c.postMessage({ type: 'BADGE_SET', count: 0 });
+              return c.focus();
+            }
           }
-        }
-        if (self.clients.openWindow) return self.clients.openWindow(target);
-      })
+          if (self.clients.openWindow) return self.clients.openWindow(target);
+        })
+    )
   );
 });
