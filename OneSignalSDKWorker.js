@@ -41,16 +41,25 @@ self.addEventListener('message', e => {
  
   if (type === 'SET_BADGE') {
     const n = parseInt(count) || 0;
-    // setAppBadge không hoạt động trong SW context, relay về client để trang tự gọi
+    try {
+      if ('setAppBadge' in self) {
+        if (n > 0) self.setAppBadge(n).catch(() => {});
+        else self.clearAppBadge().catch(() => {});
+      } else if ('setAppBadge' in navigator) {
+        if (n > 0) navigator.setAppBadge(n).catch(() => {});
+        else navigator.clearAppBadge().catch(() => {});
+      }
+    } catch (_) {}
     self.clients.matchAll({ type: 'window', includeUncontrolled: true })
       .then(clients => clients.forEach(c => c.postMessage({ type: 'BADGE_SET', count: n })))
       .catch(() => {});
   }
  
   if (type === 'CLEAR_BADGE') {
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true })
-      .then(clients => clients.forEach(c => c.postMessage({ type: 'BADGE_SET', count: 0 })))
-      .catch(() => {});
+    try {
+      if ('clearAppBadge' in self) self.clearAppBadge().catch(() => {});
+      else if ('clearAppBadge' in navigator) navigator.clearAppBadge().catch(() => {});
+    } catch (_) {}
     self.registration.getNotifications({ tag: 'lich-update' })
       .then(ns => ns.forEach(n => n.close())).catch(() => {});
   }
@@ -76,4 +85,3 @@ self.addEventListener('notificationclick', e => {
       })
   );
 });
- 
