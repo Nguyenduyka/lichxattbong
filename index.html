@@ -4798,87 +4798,24 @@ async function aiExtractFromFile(file) {
     var isPdf = /\.pdf$/i.test(file.name);
     var mimeType = isPdf ? 'application/pdf' : (file.type || 'image/jpeg');
 
-    // ── Bước 1: Upload file lên Gemini File API (nhanh hơn inline base64) ──
-    ico.textContent = '📤';
-    msg.textContent = 'Đang tải file lên...';
-    var fileUri = null;
-    try {
-      // Thử File API trước
-      var uploadResp = await fetch(
-        'https://generativelanguage.googleapis.com/upload/v1beta/files?uploadType=multipart',
-        {
-          method: 'POST',
-          headers: {
-            'X-Goog-Api-Key': _geminiKey,
-            'X-Goog-Upload-Protocol': 'multipart'
-          },
-          body: (function() {
-            var meta = JSON.stringify({ file: { display_name: file.name } });
-            var boundary = '----GeminiBoundary' + Date.now();
-            var blob = new Blob([
-              '--' + boundary + '\r\n',
-              'Content-Type: application/json; charset=UTF-8\r\n\r\n',
-              meta + '\r\n',
-              '--' + boundary + '\r\n',
-              'Content-Type: ' + mimeType + '\r\n\r\n'
-            ]);
-            return new Blob([blob, file, '\r\n--' + boundary + '--\r\n'], { type: 'multipart/related; boundary=' + boundary });
-          })()
-        }
-      );
-      if (uploadResp.ok) {
-        var uploadData = await uploadResp.json();
-        fileUri = (uploadData.file || {}).uri || null;
-        // Chờ file chuyển sang trạng thái ACTIVE (tránh lỗi 404 khi file còn PROCESSING)
-        if (fileUri) {
-          var fileName = (uploadData.file || {}).name || null; // dạng "files/abc123"
-          if (fileName) {
-            msg.textContent = 'Đang xử lý file...';
-            for (var wi = 0; wi < 10; wi++) {
-              await new Promise(function(r){ setTimeout(r, 800); });
-              try {
-                var stateResp = await fetch(
-                  'https://generativelanguage.googleapis.com/v1beta/' + fileName,
-                  { headers: { 'X-Goog-Api-Key': _geminiKey } }
-                );
-                if (stateResp.ok) {
-                  var stateData = await stateResp.json();
-                  if ((stateData.state || '') === 'ACTIVE') break;
-                  if ((stateData.state || '') === 'FAILED') { fileUri = null; break; }
-                }
-              } catch(e) { break; }
-            }
-          }
-        }
-      }
-    } catch(uploadErr) {
-      console.warn('[AI] File API upload failed, fallback to inline base64:', uploadErr.message);
-    }
+    // ── Bước 1: Đọc file dưới dạng base64 ──
+    ico.textContent = '📄';
+    msg.textContent = 'Đang đọc file...';
+    var base64 = await new Promise(function(resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function(e) { resolve(e.target.result.split(',')[1]); };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+    var filePart = { inline_data: { mime_type: mimeType, data: base64 } };
 
-    // ── Bước 2: Chuẩn bị parts ──
+    // ── Bước 2: Chuẩn bị prompt ──
     ico.textContent = '🤖';
     msg.textContent = 'AI đang phân tích nội dung...';
+
     var today = new Date();
-    var todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
-    var prompt = 'Đây là văn bản/giấy mời họp của cơ quan nhà nước Việt Nam. Trích xuất thông tin và trả về JSON thuần túy (không markdown, không giải thích):\n{"title":"tiêu đề sự kiện","date":"YYYY-MM-DD hoặc rỗng","time":"HH:MM hoặc rỗng","ses":"sang/chieu/toi","location":"địa điểm","chair":"chủ trì","member":"thành phần tham dự","prep":"cơ quan chuẩn bị","cat":"hop/ldao/kt/nd/kh"}\nGhi chú: ses dựa theo giờ (trước 12h=sang, 12-18h=chieu, sau 18h=toi). cat: hop=họp/hội nghị, ldao=lãnh đạo công tác, kt=kiểm tra/giám sát, nd=tiếp công dân, kh=khác. Hôm nay: ' + todayStr;
-
-    var filePart;
-    if (fileUri) {
-      // Dùng URI từ File API — không cần gửi lại data
-      filePart = { file_data: { mime_type: mimeType, file_uri: fileUri } };
-    } else {
-      // Fallback: inline base64 (chậm hơn nhưng vẫn hoạt động)
-      msg.textContent = 'Đang đọc file (chế độ dự phòng)...';
-      var base64 = await new Promise(function(resolve, reject) {
-        var reader = new FileReader();
-        reader.onload = function(e) { resolve(e.target.result.split(',')[1]); };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-      filePart = { inline_data: { mime_type: mimeType, data: base64 } };
-      msg.textContent = 'AI đang phân tích nội dung...';
-    }
-
+    var todayStr2 = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+    var prompt = 'Đây là văn bản/giấy mời họp của cơ quan nhà nước Việt Nam. Trích xuất thông tin và trả về JSON thuần túy (không markdown, không giải thích):\n{"title":"tiêu đề sự kiện","date":"YYYY-MM-DD hoặc rỗng","time":"HH:MM hoặc rỗng","ses":"sang/chieu/toi","location":"địa điểm","chair":"chủ trì","member":"thành phần tham dự","prep":"cơ quan chuẩn bị","cat":"hop/ldao/kt/nd/kh"}\nGhi chú: ses dựa theo giờ (trước 12h=sang, 12-18h=chieu, sau 18h=toi). cat: hop=họp/hội nghị, ldao=lãnh đạo công tác, kt=kiểm tra/giám sát, nd=tiếp công dân, kh=khác. Hôm nay: ' + todayStr2;
     var body = {
       contents: [{ parts: [filePart, { text: prompt }] }]
     };
