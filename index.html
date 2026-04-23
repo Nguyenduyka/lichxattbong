@@ -2162,6 +2162,30 @@ function fmtVi(d){return`${String(d.getDate()).padStart(2,'0')}/${String(d.getMo
 function fmtViLong(d){const dn=['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'];return`${dn[d.getDay()]}, ngày ${String(d.getDate()).padStart(2,'0')} tháng ${String(d.getMonth()+1).padStart(2,'0')} năm ${d.getFullYear()}`}
 function fmtSh(d){return`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`}
 function viDow(w){return['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'][w]}
+// ── Âm lịch Việt Nam (thuật toán Ho Ngoc Duc) ──
+function toLunar(dd,mm,yy){
+  function INT(d){return Math.floor(d);}
+  function jdFromDate(d,m,y){var a=INT((14-m)/12),yr=y+4800-a,mo=m+12*a-3;var jd=d+INT((153*mo+2)/5)+365*yr+INT(yr/4)-INT(yr/100)+INT(yr/400)-32045;if(jd<2299161){jd=d+INT((153*mo+2)/5)+365*yr+INT(yr/4)-32083;}return jd;}
+  function newMoon(k){var T=k/1236.85,T2=T*T,T3=T2*T,dr=Math.PI/180,Jd1=2415020.75933+29.53058868*k+0.0001178*T2-0.000000155*T3+0.00033*Math.sin((166.56+132.87*T-0.009173*T2)*dr);var M=359.2242+29.10535608*k-0.0000333*T2-0.00000347*T3,Mpr=306.0253+385.81691806*k+0.0107306*T2+0.00001236*T3,F=21.2964+390.67050646*k-0.0016528*T2-0.00000239*T3;var C1=(0.1734-0.000393*T)*Math.sin(M*dr)+0.0021*Math.sin(2*dr*M)-0.4068*Math.sin(Mpr*dr)+0.0161*Math.sin(dr*2*Mpr)-0.0004*Math.sin(dr*3*Mpr)+0.0104*Math.sin(dr*2*F)-0.0051*Math.sin(dr*(M+Mpr))-0.0074*Math.sin(dr*(M-Mpr))+0.0004*Math.sin(dr*(2*F+M))-0.0004*Math.sin(dr*(2*F-M))-0.0006*Math.sin(dr*(2*F+Mpr))+0.0010*Math.sin(dr*(2*F-Mpr))+0.0005*Math.sin(dr*(2*Mpr+M));var deltaT;if(T<-11){deltaT=0.001+0.000839*T+0.0002261*T2-0.00000845*T3-0.000000081*T*T3;}else{deltaT=-0.000278+0.000265*T+0.000262*T2;}return Jd1+C1-deltaT;}
+  function sunLong(jdn){var T=(jdn-2451545.0)/36525,T2=T*T,dr=Math.PI/180,M=357.5291+35999.0503*T-0.0001559*T2-0.00000048*T*T2,L0=280.46646+36000.76983*T+0.0003032*T2,DL=1.9146-0.004817*T-0.000014*T2;var L=L0+DL*Math.sin(dr*M)+0.019993*Math.sin(dr*2*M)+0.00029*Math.sin(dr*3*M)-0.0101*Math.sin(dr*(L0-L0))+0.02929*Math.sin(dr*(L0-L0));L=L%360;if(L<0)L+=360;return INT(L/30);}
+  function getNewMoonDay(k,tz){return INT(newMoon(k)+0.5+tz/24);}
+  function getLunarMonth11(y,tz){var off=jdFromDate(31,12,y)-2415021,k=INT(off/29.530588853),nm=getNewMoonDay(k,tz);var sunLon=sunLong(nm-1);if(sunLon>=9)nm=getNewMoonDay(k-1,tz);return nm;}
+  function isLeapYear(nm11,k,tz){return getNewMoonDay(k+13,tz)-nm11>=382;}
+  var tz=7,jd=jdFromDate(dd,mm,yy);
+  var k=INT((jd-2415021.076998695)/29.530588853);
+  var monthStart=getNewMoonDay(k+1,tz);
+  if(monthStart>jd)monthStart=getNewMoonDay(k,tz);
+  var a11=getLunarMonth11(yy,tz),b11;
+  if(a11>=monthStart){b11=getLunarMonth11(yy-1,tz);a11=b11;}else{b11=getLunarMonth11(yy+1,tz);}
+  var lunarDay=jd-monthStart+1;
+  var diff=INT((monthStart-a11)/29);
+  var lunarLeap=0,lunarMonth=diff+11;
+  if(b11-a11>365){var leapMonthDiff=isLeapYear(a11,k,tz)?diff:0;if(leapMonthDiff>0&&leapMonthDiff===diff){lunarLeap=1;}if(leapMonthDiff>0&&lunarMonth>=leapMonthDiff+11){lunarMonth--;}}
+  if(lunarMonth>12)lunarMonth-=12;
+  if(lunarMonth>=11&&diff<4)lunarMonth-=12;
+  return{day:lunarDay,month:lunarMonth,leap:lunarLeap};
+}
+function fmtLunar(d){var l=toLunar(d.getDate(),d.getMonth()+1,d.getFullYear());return l.day+'/'+l.month+(l.leap?'(n)':'');}
 function wkNum(d){const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const day=t.getUTCDay()||7;t.setUTCDate(t.getUTCDate()+4-day);const y=new Date(Date.UTC(t.getUTCFullYear(),0,1));return Math.ceil((((t-y)/86400000)+1)/7)}
 function dayEvs(ds,ses){return events.filter(e=>e.date===ds&&e.ses===ses).sort((a,b)=>(a.time||'').localeCompare(b.time||''))}
 function fIcon(t){return t&&t.startsWith('image/')?'🖼️':t&&t.includes('pdf')?'📄':t&&(t.includes('word')||t.includes('document'))?'📝':t&&(t.includes('excel')||t.includes('spreadsheet'))?'📊':'📎'}
@@ -2621,7 +2645,7 @@ function renderMobileCards(ws,wxd){
     const wxH=wxShow?`<div class="vdc-wx">${wxShow.icon} ${wxShow.temp}°C</div>`:'';
     h+=`<div class="vdc" data-date="${ds}">
       <div class="vdc-hdr ${hc}${itd?' vdc-hdr-today':''}">
-        <div class="vdc-main"><span class="vdc-dow">${viDow(d.getDay())}</span><span class="vdc-sep">·</span><span class="vdc-dt">${fmtSh(d)}</span></div>
+        <div class="vdc-main"><span class="vdc-dow">${viDow(d.getDay())}</span><span class="vdc-sep">·</span><span class="vdc-dt">${fmtSh(d)}</span><span style="font-size:13px;opacity:.85;margin-left:4px;font-weight:700">· ${fmtLunar(d)} Âm lịch</span></div>
         ${wxH}
       </div>
       <div class="vdc-ses">
@@ -2680,6 +2704,7 @@ function renderAdminCards(ws,wxd){
           <span class="vdc-dow">${viDow(d.getDay())}</span>
           <span class="vdc-sep">·</span>
           <span class="vdc-dt">${fmtSh(d)}</span>
+          <span style="font-size:13px;opacity:.85;margin-left:4px;font-weight:700">· ${fmtLunar(d)} Âm lịch</span>
         </div>
         ${wxH}
       </div>
@@ -4627,27 +4652,33 @@ function trackVisit(){
     document.addEventListener('scroll',_showIOS,{once:true,passive:true});
   }else{
     var deferred=null;
+    var bannerShown=false;
+    function showAndroidBanner(){
+      if(bannerShown)return; bannerShown=true;
+      banner.classList.add('show');
+    }
     window.addEventListener('beforeinstallprompt',function(e){
-      e.preventDefault();deferred=e;
-      setTimeout(function(){banner.classList.add('show');},1500);
+      e.preventDefault(); deferred=e;
+      showAndroidBanner();
     });
     document.getElementById('pwaInstall').onclick=async function(){
-      if(!deferred)return;
-      deferred.prompt();
-      var r=await deferred.userChoice;
-      deferred=null;
-      dismiss(r.outcome==='accepted'?365:7);
-    };
-    // Nếu sau 2.5s không có beforeinstallprompt → hiện hướng dẫn thủ công
-    setTimeout(function(){
-      if(!deferred&&banner.parentNode){
+      if(deferred){
+        // Có beforeinstallprompt → hiện hộp thoại cài đặt native
+        deferred.prompt();
+        var r=await deferred.userChoice;
+        deferred=null;
+        dismiss(r.outcome==='accepted'?365:7);
+      } else {
+        // Không có beforeinstallprompt → hướng dẫn thủ công
         var btn=document.getElementById('pwaInstall');
-        if(btn){btn.textContent='Xem hướng dẫn';}
+        if(btn){btn.textContent='Đã hiểu ✓'; btn.disabled=true;}
         var sp=banner.querySelector('.pwa-txt span');
-        if(sp)sp.textContent='Bấm menu ⋮ → Thêm vào màn hình chính / Cài ứng dụng';
-        banner.classList.add('show');
+        if(sp)sp.innerHTML='Bấm menu <b>⋮</b> góc trên phải → chọn <b>Thêm vào màn hình chính</b> hoặc <b>Cài ứng dụng</b>';
+        dismiss(1);
       }
-    },2500);
+    };
+    // Luôn hiện banner sau 2s dù có hay không có beforeinstallprompt
+    setTimeout(showAndroidBanner, 2000);
   }
 })();
 </script>
@@ -4757,12 +4788,10 @@ function showApiStatus(msg, bg, color) {
 // ── AI đọc file ──
 function aiReadFiles(files) {
   var fileList = Array.isArray(files) ? files : Array.from(files || []);
-  console.log('[AI] aiReadFiles called, files:', fileList.length);
   if (!fileList.length) return;
   var supported = fileList.filter(function(f) {
     return /\.(pdf|jpg|jpeg|png|gif)$/i.test(f.name);
   });
-  console.log('[AI] supported files:', supported.length, supported.map(function(f){return f.name;}));
   if (supported.length === 0) return;
   _aiResult = null;
   var bar = document.getElementById('aiReadBar');
@@ -4783,10 +4812,7 @@ async function aiExtractFromFile(file) {
   var btn = document.getElementById('aiReadBtn');
   var ico = document.getElementById('aiReadIco');
   try {
-    if (!_geminiKey) {
-      // Thử load lại key từ Firebase một lần nữa trước khi báo lỗi
-      await loadApiKeyFromFirebase();
-    }
+    if (!_geminiKey) await loadApiKeyFromFirebase();
     if (!_geminiKey) {
       ico.textContent = '🔑';
       msg.textContent = 'Chưa có API Key. Nhấn để cài đặt.';
@@ -4795,82 +4821,78 @@ async function aiExtractFromFile(file) {
       btn.style.display = 'inline-block';
       return;
     }
-    var isPdf = /\.pdf$/i.test(file.name);
-    var mimeType = isPdf ? 'application/pdf' : (file.type || 'image/jpeg');
 
-    // ── Bước 1: Đọc file dưới dạng base64 ──
+    var isPdf = /\.pdf$/i.test(file.name);
+
+    // ── Bước 1: Chuẩn bị file (nén ảnh nếu cần, giữ nguyên PDF) ──
     ico.textContent = '📄';
     msg.textContent = 'Đang đọc file...';
-    var base64 = await new Promise(function(resolve, reject) {
-      var reader = new FileReader();
-      reader.onload = function(e) { resolve(e.target.result.split(',')[1]); };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-    var filePart = { inline_data: { mime_type: mimeType, data: base64 } };
+    var base64, mimeType;
+    if (isPdf) {
+      mimeType = 'application/pdf';
+      base64 = await new Promise(function(resolve, reject) {
+        var r = new FileReader();
+        r.onload = function(e) { resolve(e.target.result.split(',')[1]); };
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+    } else {
+      // Nén ảnh xuống tối đa 1200px, JPEG 0.75 → giảm token đáng kể
+      mimeType = 'image/jpeg';
+      base64 = await new Promise(function(resolve, reject) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          var img = new Image();
+          img.onload = function() {
+            var MAX = 1200;
+            var w = img.width, h = img.height;
+            if (w > h && w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+            else if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
+            var canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/jpeg', 0.75).split(',')[1]);
+          };
+          img.onerror = reject;
+          img.src = e.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
 
-    // ── Bước 2: Chuẩn bị prompt ──
+    // ── Bước 2: Gọi Gemini — 1 request duy nhất ──
     ico.textContent = '🤖';
-    msg.textContent = 'AI đang phân tích nội dung...';
-
+    msg.textContent = 'AI đang đọc giấy mời...';
     var today = new Date();
     var todayStr2 = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
-    var prompt = 'Đây là văn bản/giấy mời họp của cơ quan nhà nước Việt Nam. Trích xuất thông tin và trả về JSON thuần túy (không markdown, không giải thích):\n{"title":"tiêu đề sự kiện","date":"YYYY-MM-DD hoặc rỗng","time":"HH:MM hoặc rỗng","ses":"sang/chieu/toi","location":"địa điểm","chair":"chủ trì","member":"thành phần tham dự","prep":"cơ quan chuẩn bị","cat":"hop/ldao/kt/nd/kh"}\nGhi chú: ses dựa theo giờ (trước 12h=sang, 12-18h=chieu, sau 18h=toi). cat: hop=họp/hội nghị, ldao=lãnh đạo công tác, kt=kiểm tra/giám sát, nd=tiếp công dân, kh=khác. Hôm nay: ' + todayStr2;
-    var body = {
-      contents: [{ parts: [filePart, { text: prompt }] }],
-      generationConfig: { maxOutputTokens: 512, temperature: 0 }
-    };
+    var prompt = 'Bạn là trợ lý hành chính. Đọc giấy mời/văn bản này và trả về JSON (không markdown):\n{"title":"tên sự kiện","date":"YYYY-MM-DD","time":"HH:MM","ses":"sang/chieu/toi","location":"địa điểm","chair":"chủ trì","member":"thành phần","prep":"chuẩn bị","cat":"hop/ldao/kt/nd/kh"}\nses: <12h=sang, 12-18h=chieu, >18h=toi. cat: hop=họp, ldao=lãnh đạo, kt=kiểm tra, nd=tiếp dân, kh=khác. Hôm nay: ' + todayStr2;
 
-    // ── Bước 3: Gọi generateContent ──
-    var models = ['gemini-2.0-flash', 'gemini-2.0-flash-lite'];
-    var resp = null;
-    var lastStatus = 0;
-    for (var mi = 0; mi < models.length; mi++) {
-      if (mi > 0) {
-        msg.textContent = 'Đang thử model dự phòng (' + models[mi] + ')...';
+    var resp = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + _geminiKey,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [
+            { inline_data: { mime_type: mimeType, data: base64 } },
+            { text: prompt }
+          ]}],
+          generationConfig: { response_mime_type: 'application/json', temperature: 0, maxOutputTokens: 512 }
+        })
       }
-      var maxRetry = 2;
-      var retryOk = false;
-      for (var ri = 0; ri < maxRetry; ri++) {
-        if (ri > 0) {
-          var waitSec = 10;
-          msg.textContent = 'Thử lại sau ' + waitSec + 's...';
-          await new Promise(function(r){ setTimeout(r, waitSec * 1000); });
-        }
-        try {
-          resp = await fetch(
-            'https://generativelanguage.googleapis.com/v1beta/models/' + models[mi] + ':generateContent',
-            { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': _geminiKey }, body: JSON.stringify(body) }
-          );
-        } catch(fetchErr) {
-          lastStatus = 0;
-          if (ri < maxRetry - 1) continue; else break;
-        }
-        lastStatus = resp.status;
-        if (resp.status === 403) {
-          ico.textContent = '🔑'; msg.textContent = 'API Key không hợp lệ. Vào 🤖 API Key để cập nhật.'; return;
-        }
-        if (resp.ok) { retryOk = true; break; }
-        if (resp.status !== 503 && resp.status !== 429) break; // lỗi khác (400...) → thử model tiếp
-      }
-      if (retryOk) break;
-    }
-    if (!resp || !resp.ok) {
-      // Cho phép thử lại thủ công
-      var errCode = lastStatus ? ('HTTP ' + lastStatus) : 'Mất kết nối';
-      ico.textContent = '⚠️';
-      msg.textContent = 'Không đọc được: ' + errCode + '. Nhấn để thử lại.';
-      btn.textContent = '🔄 Thử lại';
-      btn.onclick = function() { aiExtractFromFile(file); };
-      btn.style.display = 'inline-block';
-      return;
-    }
+    );
+
+    if (resp.status === 429) throw new Error('Hết quota hôm nay (429). Đổi API key hoặc thử lại ngày mai.');
+    if (resp.status === 403) { ico.textContent = '🔑'; msg.textContent = 'API Key không hợp lệ. Vào 🤖 API Key để cập nhật.'; return; }
+    if (!resp.ok) throw new Error('Lỗi kết nối HTTP ' + resp.status);
+
     var data = await resp.json();
-    var text = ((data.candidates||[])[0]||{}).content;
-    text = ((text||{}).parts||[]).map(function(p){return p.text||'';}).join('');
+    var text = ((((data.candidates||[])[0]||{}).content||{}).parts||[]).map(function(p){return p.text||'';}).join('');
     var jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('Không tìm thấy dữ liệu');
+    if (!jsonMatch) throw new Error('Không tìm thấy dữ liệu trong phản hồi');
     _aiResult = JSON.parse(jsonMatch[0]);
+
     ico.textContent = '✅';
     msg.textContent = 'Đọc xong! Nhấn để điền vào form.';
     btn.textContent = '✨ Điền vào form';
@@ -4878,8 +4900,10 @@ async function aiExtractFromFile(file) {
     btn.style.display = 'inline-block';
   } catch(e) {
     ico.textContent = '⚠️';
-    msg.textContent = 'Không đọc được: ' + (e.message || 'lỗi không xác định');
-    btn.style.display = 'none';
+    msg.textContent = e.message || 'Lỗi không xác định';
+    btn.textContent = '🔄 Thử lại';
+    btn.onclick = function() { aiExtractFromFile(file); };
+    btn.style.display = 'inline-block';
   }
 }
 
