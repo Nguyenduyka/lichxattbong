@@ -5,7 +5,7 @@
 importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
  
 // ── CACHE ──────────────────────────────────────
-const CACHE_NAME = 'llv-v15';
+const CACHE_NAME = 'llv-v16';
 const CACHE_URLS = ['/', '/index.html'];
  
 self.addEventListener('install', e => {
