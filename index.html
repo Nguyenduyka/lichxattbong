@@ -2108,6 +2108,7 @@ function _updateMobNotifBadge(n){
 const GAS_PUSH_URL = 'https://script.google.com/macros/s/AKfycbwg3oqfg0qjNXjVmHwwmrPwomObZlBrNjSKb5yYthpASmgUbdyLXQMi9HwpEssPCSIBkw/exec';
 
 async function sendFCMPush(count, msg, evId, evDate) {
+  console.log('[Push] sendFCMPush called:', {count, msg: msg?.slice(0,50), evId});
   try {
     const newCount = count || events.filter(e => e.isNew && e.isNew > 0).length;
     const pushMsg = msg || ('📅 Lịch làm việc vừa được cập nhật');
@@ -2116,15 +2117,25 @@ async function sendFCMPush(count, msg, evId, evDate) {
       const payload = {count: newCount, ts: Date.now(), msg: pushMsg, uid: currentUID || 'viewer'};
       if(evId) payload.evId = evId;
       if(evDate) payload.evDate = evDate;
-      fbDb.ref('push_trigger/latest').set(payload);
+      fbDb.ref('push_trigger/latest').set(payload)
+        .then(()=>console.log('[Push] ✅ push_trigger written to Firebase'))
+        .catch(e=>console.warn('[Push] ❌ push_trigger failed:',e.message));
+    } else {
+      console.warn('[Push] fbDb not ready');
     }
-    // Gọi GAS push nếu đã cấu hình (gửi đến điện thoại kể cả khi đóng app)
+    // Gọi GAS push để gửi đến điện thoại (kể cả khi app đóng)
     if (GAS_PUSH_URL) {
-      fetch(GAS_PUSH_URL + '?action=push&count=' + newCount
-        + '&msg=' + encodeURIComponent(pushMsg), {method:'GET', mode:'no-cors'}
-      ).catch(()=>{});
+      const gasUrl = GAS_PUSH_URL + '?action=push&count=' + newCount + '&msg=' + encodeURIComponent(pushMsg);
+      console.log('[Push] calling GAS:', gasUrl.slice(0,100)+'...');
+      fetch(gasUrl, {method:'GET', mode:'no-cors'})
+        .then(()=>console.log('[Push] ✅ GAS request sent (no-cors, response opaque)'))
+        .catch(e=>console.warn('[Push] ❌ GAS request failed:',e.message));
+    } else {
+      console.warn('[Push] GAS_PUSH_URL not set');
     }
-  } catch(e) {}
+  } catch(e) {
+    console.error('[Push] sendFCMPush error:', e);
+  }
 }
 
 // Đếm lịch NEW và cập nhật badge icon
