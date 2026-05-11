@@ -171,6 +171,7 @@ body.is-tv-viewer .vs-loading-spinner{position:fixed!important;top:0!important;l
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
@@ -1364,6 +1365,17 @@ return;}
     fbDb=firebase.database(app);
     fbAuth=firebase.auth(app);
     try{fbStorage=firebase.storage(app);}catch(e){}
+
+    // App Check với ReCaptcha v3 — bắt buộc vì Firebase Console enforce
+    try{
+      const appCheck=firebase.appCheck(app);
+      appCheck.activate(
+        new firebase.appCheck.ReCaptchaV3Provider('6LdESeQsAAAAAGGqT1CFGV52hgAKxQwEwADZDe6r'),
+        true // auto-refresh token
+      );
+      console.log('[AppCheck] activated');
+    }catch(e){console.warn('[AppCheck] init failed:',e.message);}
+
     fbReady=true;
     console.log('[Firebase] SDK ready');
 
