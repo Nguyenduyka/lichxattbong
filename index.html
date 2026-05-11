@@ -1058,7 +1058,7 @@ async function _renderPdfBlob(blob){
 // ════════════════════════════════════════
 // ORG_CONFIG – Chỉnh thông tin này khi triển khai cho cơ quan mới
 // ════════════════════════════════════════
-console.log('[App] Script v2025-05-12 loaded');
+console.log('[App] Script v2025-05-12b FIXED loaded');
 
 // ── KHAI BÁO BIẾN TRẠNG THÁI SỚM NHẤT ──
 // Phải ở đầu script để tránh ReferenceError khi event handler (focus/pageshow/visibilitychange)
@@ -2978,11 +2978,18 @@ function startTV(){
   document.body.style.touchAction='none';
   const b=document.getElementById('btnTV');if(b){b.textContent='📺 Tắt chiếu lịch';b.classList.add('tv-on');}
   const bs=document.getElementById('btnScroll');if(bs)bs.textContent='⏸ Tạm dừng cuộn';
-  // Render lại viewer với dữ liệu mới nhất rồi cuộn
+  // Render với dữ liệu hiện có; nếu chưa có data thì renderAllNoFetch sẽ gọi lại sau
   fetchWx().then(wxd=>{
-    renderWxBox(document.getElementById('vsWx'),wxd);
-    renderFcStrip('vsFc',wxd);
-    renderVsTable(wkStart(wkOff),wxd);
+    if(wxd&&!wxData){wxData=wxd;wxFetchedAt=Date.now();}
+    renderWxBox(document.getElementById('vsWx'),wxd||wxData);
+    renderFcStrip('vsFc',wxd||wxData);
+    renderVsTable(wkStart(wkOff),wxd||wxData);
+    renderLegend();
+    renderVsTicker();
+    setTimeout(()=>{startScroll();},700);
+  }).catch(()=>{
+    // Nếu weather fail vẫn render với data hiện có
+    renderVsTable(wkStart(wkOff),wxData);
     renderLegend();
     renderVsTicker();
     setTimeout(()=>{startScroll();},700);
@@ -4630,7 +4637,7 @@ function trackVisit(){
   const _tvParam=_params.get('tv');
   if(_tvParam==='1'||_tvParam===''||window.location.search.includes('tv1')){
     _autoTV=true;
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!tvOn){startTV();try{bc.postMessage({type:'tvOn'});}catch(e){}}}));
+    // Không startTV() ngay — sẽ startTV sau khi Firebase load xong để có dữ liệu
   }
   if(!_autoTV) initFCM();
   setTimeout(_onAppFocus,300);
@@ -4667,7 +4674,13 @@ function trackVisit(){
     setLoadProgress(90);
     fetchWx().then(wxd=>{if(wxd&&!wxData){wxData=wxd;wxFetchedAt=Date.now();}}).catch(()=>{});
     removeLoadingSpinner();
-    renderAllNoFetch();
+    // Nếu là TV mode → startTV bây giờ (đã có data từ Firebase)
+    if(_autoTV&&!tvOn){
+      startTV();
+      try{bc.postMessage({type:'tvOn'});}catch(e){}
+    } else {
+      renderAllNoFetch();
+    }
     trackVisit();
     console.log('[Boot] done, events='+events.length);
   }catch(err){
