@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Hệ thống quản lý lịch làm việc số</title>
 <script>
 
@@ -2257,6 +2260,12 @@ function samples(){
 // ════════════════════════════════════════
 // WEATHER
 // ════════════════════════════════════════
+function wxInfo(code,day){
+  const d={0:'Trời quang',1:'Ít mây',2:'Mây rải rác',3:'Nhiều mây',45:'Sương mù',51:'Mưa phùn nhẹ',53:'Mưa phùn',61:'Mưa nhẹ',63:'Mưa vừa',65:'Mưa to',80:'Mưa rào nhẹ',81:'Mưa rào',82:'Mưa rào to',95:'Giông bão'};
+  const i={0:day?'☀️':'🌙',1:day?'🌤':'🌙',2:'⛅',3:'☁️',45:'🌫️',51:'🌦️',53:'🌦️',61:'🌧️',63:'🌧️',65:'⛈️',80:'🌦️',81:'🌧️',82:'⛈️',95:'⛈️'};
+  return{icon:i[code]||'🌡️',desc:d[code]||'Không xác định'};
+}
+
 function mockWx(){
   const now=new Date();const m=now.getMonth()+1;const h=now.getHours();
   const ta=[23,24,26,28,30,31,31,31,29,27,25,23];
