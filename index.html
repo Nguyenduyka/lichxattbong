@@ -1059,7 +1059,7 @@ async function _renderPdfBlob(blob){
 // ════════════════════════════════════════
 // ORG_CONFIG – Chỉnh thông tin này khi triển khai cho cơ quan mới
 // ════════════════════════════════════════
-console.log('[App] Script v2025-05-12b FIXED loaded');
+console.log('[App] Script v2025-05-12c SAVE-DEBUG loaded');
 
 // ── KHAI BÁO BIẾN TRẠNG THÁI SỚM NHẤT ──
 // Phải ở đầu script để tránh ReferenceError khi event handler (focus/pageshow/visibilitychange)
@@ -2135,6 +2135,7 @@ let _saveSeq=0;
 // _saveError: thông báo cho user biết lần save gần nhất bị lỗi
 let _lastSaveError=null;
 const save=()=>{
+  console.log('[Save] start, events=', events.length, 'currentUID=', currentUID, 'fbReady=', fbReady, 'fbStorage=', !!fbStorage);
   // Lưu localStorage (offline fallback) — key theo uid
   const storeKey=STORE_KEY+(currentUID?'_'+currentUID:'');
   const jsonStr=JSON.stringify(events);
