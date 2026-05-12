@@ -168,10 +168,63 @@ body.is-tv-viewer .vs-loading-spinner{position:fixed!important;top:0!important;l
 .pwa-btn{background:var(--red);color:#fff;border:none;border-radius:20px;padding:9px 18px;font:700 12px/1 'Be Vietnam Pro',sans-serif;cursor:pointer;white-space:nowrap;flex-shrink:0;-webkit-tap-highlight-color:transparent}
 .pwa-btn:active{background:var(--red2)}
 .pwa-x{background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer;padding:2px 6px;flex-shrink:0;line-height:1;-webkit-tap-highlight-color:transparent}
-.atb-menu-item{display:block;width:100%;padding:9px 14px;background:transparent;border:none;border-radius:6px;font-family:'Be Vietnam Pro',sans-serif;font-size:12.5px;font-weight:600;color:var(--ink);cursor:pointer;text-align:left;transition:background .12s}
-.atb-menu-item:hover{background:#eef4fb;color:#1e5a96}
-.atb-menu-item[style*="e74c3c"]:hover{background:#fdeaea}
-.atb-menu-item[style*="16a34a"]:hover{background:#e8f5ec}
+
+/* ═══════ TOOLBAR BUTTONS - ENHANCED ═══════ */
+.ab.ab-icon{padding:6px 11px;gap:5px;border-radius:8px;font-size:11.5px;font-weight:700;background:#fff;border:1.5px solid #e5e7eb;color:#475569;box-shadow:0 1px 2px rgba(0,0,0,0.04);transition:all .18s cubic-bezier(.4,0,.2,1);display:inline-flex;align-items:center;line-height:1}
+.ab.ab-icon .ab-ico{font-size:13.5px;line-height:1;display:inline-flex;align-items:center;flex-shrink:0}
+.ab.ab-icon .ab-txt{line-height:1}
+.ab.ab-icon:hover{transform:translateY(-1px);border-color:#1e5a96;color:#1e5a96;background:#f0f7ff;box-shadow:0 3px 8px rgba(30,90,150,.15)}
+.ab.ab-icon:active{transform:translateY(0);box-shadow:0 1px 2px rgba(0,0,0,0.06)}
+
+/* Nút "Quản lý" có gradient nền nhẹ */
+.ab.ab-manage{background:linear-gradient(135deg,#fff,#f8fafc);border-color:#cbd5e1}
+.ab.ab-manage .ab-caret{font-size:10px;margin-left:2px;color:#94a3b8;transition:transform .18s}
+.ab.ab-manage:hover{background:linear-gradient(135deg,#eff6ff,#dbeafe);border-color:#3b82f6;color:#1e40af}
+.ab.ab-manage:hover .ab-caret{transform:rotate(180deg);color:#3b82f6}
+
+/* Nút Thông báo - tím */
+.ab.ab-notify{background:linear-gradient(135deg,#faf5ff,#f3e8ff);border-color:#d8b4fe;color:#6b21a8}
+.ab.ab-notify:hover{background:linear-gradient(135deg,#f3e8ff,#e9d5ff);border-color:#9333ea;color:#581c87;box-shadow:0 3px 8px rgba(147,51,234,.2)}
+
+/* Nút Thêm lịch - nổi bật nhất */
+.ab.ab-add{background:linear-gradient(135deg,#dc2626,#b91c1c);border-color:#b91c1c;color:#fff;font-weight:800;padding:6px 14px;box-shadow:0 2px 6px rgba(220,38,38,.25)}
+.ab.ab-add .ab-ico{font-size:15px;font-weight:300}
+.ab.ab-add:hover{background:linear-gradient(135deg,#b91c1c,#991b1b);border-color:#991b1b;color:#fff;transform:translateY(-1px);box-shadow:0 4px 12px rgba(220,38,38,.4)}
+
+/* Nút TV bật */
+.ab.ab-icon.tv-on{background:linear-gradient(135deg,#15683a,#0d4a28)!important;color:#fff!important;border-color:#0d4a28!important;box-shadow:0 2px 8px rgba(21,104,58,.35)!important}
+.ab.ab-icon.tv-on:hover{background:linear-gradient(135deg,#0d4a28,#0a3a1f)!important;box-shadow:0 4px 12px rgba(21,104,58,.5)!important}
+
+/* ═══════ DROPDOWN MENU ═══════ */
+.atb-menu{position:fixed;background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 12px 36px rgba(0,0,0,0.18),0 2px 8px rgba(0,0,0,0.06);padding:8px;z-index:99999;min-width:280px;animation:menuSlideIn .18s cubic-bezier(.32,1,.24,1);transform-origin:top left}
+@keyframes menuSlideIn{from{opacity:0;transform:translateY(-8px) scale(.97)}to{opacity:1;transform:none}}
+
+.atb-menu-header{padding:8px 12px 10px;font-size:10.5px;font-weight:800;color:#64748b;letter-spacing:.8px;text-transform:uppercase;border-bottom:1px solid #f1f5f9;margin-bottom:6px}
+
+.atb-menu-item{display:flex;align-items:center;gap:11px;width:100%;padding:9px 12px;background:transparent;border:none;border-radius:9px;font-family:'Be Vietnam Pro',sans-serif;cursor:pointer;text-align:left;transition:all .14s cubic-bezier(.4,0,.2,1);color:#1e293b;margin-bottom:2px}
+.atb-menu-item:hover{background:linear-gradient(90deg,#f1f5f9,#f8fafc);transform:translateX(2px)}
+.atb-menu-item:last-child{margin-bottom:0}
+
+.atb-mi-ico{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:9px;font-size:16px;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+.atb-mi-txt{display:flex;flex-direction:column;gap:1px;flex:1;min-width:0}
+.atb-mi-lbl{font-size:13px;font-weight:700;color:#0f172a;line-height:1.3}
+.atb-mi-desc{font-size:10.5px;color:#64748b;font-weight:500;line-height:1.3}
+
+.atb-menu-divider{height:1px;background:linear-gradient(90deg,transparent,#e2e8f0 50%,transparent);margin:6px 4px}
+
+.atb-menu-danger:hover{background:linear-gradient(90deg,#fef2f2,#fee2e2)}
+.atb-menu-danger .atb-mi-lbl{color:#991b1b}
+.atb-menu-danger .atb-mi-desc{color:#dc2626}
+
+/* Mobile: menu fullwidth */
+@media(max-width:600px){
+  .atb-menu{min-width:calc(100vw - 24px);max-width:calc(100vw - 24px);left:12px!important;right:12px}
+  .atb-mi-ico{width:38px;height:38px;font-size:18px}
+  .atb-mi-lbl{font-size:14px}
+  .atb-mi-desc{font-size:11.5px}
+  .ab.ab-icon{font-size:12px;padding:7px 11px}
+}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -302,32 +355,57 @@ body.is-tv-viewer .vs-loading-spinner{position:fixed!important;top:0!important;l
 
   <div class="atb">
     <div class="atb-nav">
-      <button class="atb-nb" onclick="nav(-1)">‹</button>
+      <button class="atb-nb" onclick="nav(-1)" title="Tuần trước">‹</button>
       <div class="atb-lbl" id="atbLbl">──</div>
-      <button class="atb-nb" onclick="nav(1)">›</button>
+      <button class="atb-nb" onclick="nav(1)" title="Tuần sau">›</button>
     </div>
-    <button class="ab" onclick="goToday()">📍 Tuần này</button>
-    <button class="ab" onclick="openWkList()">📋 Danh sách lịch</button>
+    <button class="ab ab-icon" onclick="goToday()" title="Về tuần hiện tại"><span class="ab-ico">📍</span><span class="ab-txt">Tuần này</span></button>
+    <button class="ab ab-icon" onclick="openWkList()" title="Xem tất cả lịch theo tuần"><span class="ab-ico">📋</span><span class="ab-txt">Danh sách lịch</span></button>
     <span class="atb-sp"></span>
-    <button class="ab" id="btnTV" onclick="toggleTV()">📺 Bật chiếu lịch</button>
-    <button class="ab" onclick="openPrintModal()">🖨️ In lịch</button>
-    <button class="ab" onclick="openThongKe()">📊 Thống kê</button>
+    <button class="ab ab-icon" id="btnTV" onclick="toggleTV()" title="Bật/tắt chế độ chiếu TV"><span class="ab-ico">📺</span><span class="ab-txt">Chiếu lịch</span></button>
+    <button class="ab ab-icon" onclick="openPrintModal()" title="In lịch ra giấy"><span class="ab-ico">🖨️</span><span class="ab-txt">In lịch</span></button>
+    <button class="ab ab-icon" onclick="openThongKe()" title="Xem thống kê lịch theo tháng/năm"><span class="ab-ico">📊</span><span class="ab-txt">Thống kê</span></button>
 
     <div class="atb-dropdown" style="position:relative;display:inline-block">
-      <button class="ab" onclick="toggleManageMenu(event)" id="btnManageMenu">⚙️ Quản lý ▾</button>
-      <div id="manageMenu" class="atb-menu" style="display:none;position:fixed;background:#fff;border:1.5px solid #d1d5db;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.25);padding:6px;z-index:99999;min-width:200px">
-        <button class="atb-menu-item" onclick="closeManageMenu();backupData()">💾 Sao lưu lịch</button>
-        <button class="atb-menu-item" onclick="closeManageMenu();importLich()">📥 Import lịch</button>
-        <button class="atb-menu-item" onclick="closeManageMenu();restoreData()">📂 Khôi phục</button>
-        <button class="atb-menu-item" onclick="closeManageMenu();migrateBase64Files()" style="color:#16a34a">🔄 Tối ưu file</button>
-        <button class="atb-menu-item" onclick="closeManageMenu();openApiKeySetting()">🤖 API Key</button>
-        <div style="height:1px;background:#e5e7eb;margin:5px 0"></div>
-        <button class="atb-menu-item" onclick="closeManageMenu();clearAll()" style="color:#e74c3c">🗑 Xoá tất cả lịch</button>
+      <button class="ab ab-icon ab-manage" onclick="toggleManageMenu(event)" id="btnManageMenu" title="Các tính năng quản lý nâng cao">
+        <span class="ab-ico">⚙️</span><span class="ab-txt">Quản lý</span><span class="ab-caret">▾</span>
+      </button>
+      <div id="manageMenu" class="atb-menu" style="display:none">
+        <div class="atb-menu-header">⚙️ Quản lý nâng cao</div>
+        <button class="atb-menu-item" onclick="closeManageMenu();backupData()">
+          <span class="atb-mi-ico" style="background:linear-gradient(135deg,#dbeafe,#bfdbfe);color:#1e40af">💾</span>
+          <div class="atb-mi-txt"><div class="atb-mi-lbl">Sao lưu lịch</div><div class="atb-mi-desc">Tải file JSON về máy</div></div>
+        </button>
+        <button class="atb-menu-item" onclick="closeManageMenu();importLich()">
+          <span class="atb-mi-ico" style="background:linear-gradient(135deg,#fef3c7,#fde68a);color:#92400e">📥</span>
+          <div class="atb-mi-txt"><div class="atb-mi-lbl">Import lịch</div><div class="atb-mi-desc">Nạp từ file Excel/CSV</div></div>
+        </button>
+        <button class="atb-menu-item" onclick="closeManageMenu();restoreData()">
+          <span class="atb-mi-ico" style="background:linear-gradient(135deg,#e0e7ff,#c7d2fe);color:#3730a3">📂</span>
+          <div class="atb-mi-txt"><div class="atb-mi-lbl">Khôi phục</div><div class="atb-mi-desc">Phục hồi từ file sao lưu</div></div>
+        </button>
+        <button class="atb-menu-item" onclick="closeManageMenu();migrateBase64Files()">
+          <span class="atb-mi-ico" style="background:linear-gradient(135deg,#dcfce7,#bbf7d0);color:#15803d">🔄</span>
+          <div class="atb-mi-txt"><div class="atb-mi-lbl">Tối ưu file</div><div class="atb-mi-desc">Giảm dung lượng app</div></div>
+        </button>
+        <button class="atb-menu-item" onclick="closeManageMenu();openApiKeySetting()">
+          <span class="atb-mi-ico" style="background:linear-gradient(135deg,#f3e8ff,#e9d5ff);color:#6b21a8">🤖</span>
+          <div class="atb-mi-txt"><div class="atb-mi-lbl">API Key Gemini</div><div class="atb-mi-desc">Cài đặt AI đọc giấy mời</div></div>
+        </button>
+        <div class="atb-menu-divider"></div>
+        <button class="atb-menu-item atb-menu-danger" onclick="closeManageMenu();clearAll()">
+          <span class="atb-mi-ico" style="background:linear-gradient(135deg,#fee2e2,#fecaca);color:#991b1b">🗑</span>
+          <div class="atb-mi-txt"><div class="atb-mi-lbl">Xoá tất cả lịch</div><div class="atb-mi-desc">Cảnh báo: không thể khôi phục</div></div>
+        </button>
       </div>
     </div>
 
-    <button class="ab" style="color:#7c3aed;border-color:#7c3aed" onclick="openThongBaoNhanh()" title="Gửi thông báo nhanh đến điện thoại">📢 Thông báo</button>
-    <button class="ab pri" onclick="openAdd()">＋ Thêm lịch</button>
+    <button class="ab ab-icon ab-notify" onclick="openThongBaoNhanh()" title="Gửi thông báo nhanh đến điện thoại">
+      <span class="ab-ico">📢</span><span class="ab-txt">Thông báo</span>
+    </button>
+    <button class="ab ab-icon ab-add" onclick="openAdd()" title="Thêm lịch làm việc mới">
+      <span class="ab-ico">＋</span><span class="ab-txt">Thêm lịch</span>
+    </button>
   </div>
 
   <div class="admin-wk-bar" id="adminWkBar">──</div>
@@ -1071,7 +1149,7 @@ async function _renderPdfBlob(blob){
 // ════════════════════════════════════════
 // ORG_CONFIG – Chỉnh thông tin này khi triển khai cho cơ quan mới
 // ════════════════════════════════════════
-console.log('[App] Script v2025-05-12n MENU-FIX loaded');
+console.log('[App] Script v2025-05-12o UI-POLISH loaded');
 
 // ── KHAI BÁO BIẾN TRẠNG THÁI SỚM NHẤT ──
 // Phải ở đầu script để tránh ReferenceError khi event handler (focus/pageshow/visibilitychange)
