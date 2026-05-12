@@ -310,6 +310,7 @@ body.is-tv-viewer .vs-loading-spinner{position:fixed!important;top:0!important;l
     <button class="ab" onclick="openThongKe()">📊 Thống kê</button>
     <button class="ab" onclick="backupData()">💾 Sao lưu lịch</button>
     <button class="ab" onclick="importLich()">📥 Import lịch</button>
+    <button class="ab" style="color:#16a34a;border-color:#16a34a" onclick="migrateBase64Files()" title="Chuyển file đính kèm base64 cũ lên Firebase Storage để giảm dung lượng">🔄 Tối ưu file</button>
     <button class="ab" style="color:#e74c3c;border-color:#e74c3c" onclick="clearAll()">🗑 Xoá tất cả lịch</button>
     <button class="ab" onclick="restoreData()">📂 Khôi phục</button>
 
@@ -1059,7 +1060,7 @@ async function _renderPdfBlob(blob){
 // ════════════════════════════════════════
 // ORG_CONFIG – Chỉnh thông tin này khi triển khai cho cơ quan mới
 // ════════════════════════════════════════
-console.log('[App] Script v2025-05-12j VERIFY-SAVE loaded');
+console.log('[App] Script v2025-05-12l MIGRATE loaded');
 
 // ── KHAI BÁO BIẾN TRẠNG THÁI SỚM NHẤT ──
 // Phải ở đầu script để tránh ReferenceError khi event handler (focus/pageshow/visibilitychange)
@@ -1456,9 +1457,12 @@ async function _loadViewerData(){
     ]);
     const eventsUrl=urlSnap.val();
     if(eventsUrl){
-      // Tăng timeout lên 60s vì file events.json có thể lên tới hàng chục MB (chứa base64 file đính kèm)
+      // Cache buster thông minh: dùng ? nếu URL chưa có, dùng & nếu đã có
+      const sep=eventsUrl.indexOf('?')>=0?'&':'?';
+      const fetchUrl=eventsUrl+sep+'t='+Date.now();
+      console.log('[ViewerData] fetching:',fetchUrl.slice(0,120)+'...');
       const resp=await Promise.race([
-        fetch(eventsUrl+'&t='+Date.now()),
+        fetch(fetchUrl,{cache:'no-store'}),
         _timeout(60000)
       ]);
       const fetched=resp.ok?(await resp.json())||[]:[];
@@ -1492,7 +1496,7 @@ async function _loadViewerData(){
           _timeout(8000)
         ]);
         const url2=urlSnap2.val();if(!url2)return;
-        const r=await Promise.race([fetch(url2+'&t='+Date.now()),_timeout(60000)]);
+        const r=await Promise.race([fetch(url2+(url2.indexOf('?')>=0?'&':'?')+'t='+Date.now(),{cache:'no-store'}),_timeout(60000)]);
         const incoming=r.ok?(await r.json())||[]:[];
         if(_sig(incoming)===_sig(events))return;
         const unseenNew=incoming.filter(e=>e.isNew&&e.isNew>0&&!_seenNewTs.has(e.isNew));
@@ -1553,7 +1557,7 @@ function _startRealtimeListener(){
         const eventsUrl=urlSnap.val();
         let incoming=[];
         if(eventsUrl){
-          const resp=await fetch(eventsUrl+'&t='+Date.now());
+          const resp=await fetch(eventsUrl+(eventsUrl.indexOf('?')>=0?'&':'?')+'t='+Date.now(),{cache:'no-store'});
           incoming=resp.ok?(await resp.json())||[]:[];
         }else{
           // Migrate từ cấu trúc cũ nếu chưa có file
@@ -1579,7 +1583,7 @@ function _startRealtimeListener(){
       const urlSnap=await fbDb.ref('donvi/'+currentUID+'/events_file').once('value');
       const eventsUrl=urlSnap.val();
       if(!eventsUrl)return;
-      const resp=await fetch(eventsUrl+'&t='+Date.now());
+      const resp=await fetch(eventsUrl+(eventsUrl.indexOf('?')>=0?'&':'?')+'t='+Date.now(),{cache:'no-store'});
       const incoming=resp.ok?(await resp.json())||[]:[];
       const inSig=_sig(incoming);
       if(inSig===_lastSig&&_lastSig!==''){
@@ -2224,7 +2228,7 @@ const save=()=>{
             showToast('⚠️ Lưu lỗi: URL không khớp. Reload có thể không có data mới.');
           }
           // Verify: thử fetch lại file vừa upload xem có đúng số lượng events không
-          return fetch(savedUrl+'&t='+Date.now()).then(r=>r.ok?r.json():null).then(verifyData=>{
+          return fetch(savedUrl+(savedUrl.indexOf('?')>=0?'&':'?')+'t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(verifyData=>{
             if(Array.isArray(verifyData)){
               if(verifyData.length===events.length){
                 console.log('[Save] ✅ Verified: file content has '+verifyData.length+' events (match)');
@@ -2586,7 +2590,7 @@ async function renderAll(skipFetch){
       if(eventsUrl){
         // Đọc file JSON từ Storage qua URL (timeout 10 giây)
         const resp=await Promise.race([
-          fetch(eventsUrl+'&t='+Date.now()),
+          fetch(eventsUrl+(eventsUrl.indexOf('?')>=0?'&':'?')+'t='+Date.now(),{cache:'no-store'}),
           _rtimeout(10000)
         ]);
         const fetched=resp.ok?(await resp.json())||[]:null;
@@ -4654,6 +4658,131 @@ function fixDatesPlus1(){
   save();renderAllNoFetch();
   showToast("✅ Đã sửa ngày +1 cho "+events.length+" lịch!");
 }
+// ════════════════════════════════════════
+// MIGRATE: chuyển file đính kèm base64 (dataUrl) sang Firebase Storage
+// Mục đích: giảm kích thước events.json (16MB → vài chục KB)
+// ════════════════════════════════════════
+async function migrateBase64Files(){
+  if(!fbStorage||!currentUID){
+    showToast('⚠️ Cần đăng nhập admin để chạy tối ưu');
+    return;
+  }
+  // Đếm số file base64 cần migrate
+  let totalBase64=0;
+  let totalSize=0;
+  for(const ev of events){
+    if(Array.isArray(ev.files)){
+      for(const f of ev.files){
+        if(f&&f.dataUrl&&!f.url){
+          totalBase64++;
+          totalSize+=f.dataUrl.length;
+        }
+      }
+    }
+  }
+  if(totalBase64===0){
+    showToast('✅ Không có file base64 nào cần tối ưu — đã tối ưu rồi');
+    return;
+  }
+  const sizeMB=(totalSize/1024/1024).toFixed(1);
+  if(!confirm('🔄 TỐI ƯU FILE ĐÍNH KÈM\n\n'
+    +'Tìm thấy: '+totalBase64+' file đính kèm dạng base64 (~'+sizeMB+' MB)\n'
+    +'Hành động: upload lên Firebase Storage để giảm dung lượng app\n\n'
+    +'Quá trình này có thể mất vài phút, KHÔNG TẮT TRÌNH DUYỆT!\n\n'
+    +'Tiếp tục?'))return;
+
+  console.log('[Migrate] start - '+totalBase64+' files, ~'+sizeMB+' MB');
+  showToast('🔄 Đang tối ưu '+totalBase64+' file, vui lòng đợi...');
+
+  // Tạo progress UI nổi
+  const progressEl=document.createElement('div');
+  progressEl.style.cssText='position:fixed;top:20px;right:20px;z-index:99999;background:#fff;border:2px solid #16a34a;padding:14px 18px;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.15);font-family:"Be Vietnam Pro",sans-serif;min-width:280px;font-size:13px';
+  progressEl.innerHTML='<div style="font-weight:700;color:#16a34a;margin-bottom:6px">🔄 Đang tối ưu file...</div><div id="_migProgressText">0 / '+totalBase64+'</div><div style="margin-top:8px;background:#e5e7eb;border-radius:6px;height:8px;overflow:hidden"><div id="_migProgressBar" style="background:#16a34a;height:100%;width:0%;transition:width 0.3s"></div></div>';
+  document.body.appendChild(progressEl);
+  const txtEl=document.getElementById('_migProgressText');
+  const barEl=document.getElementById('_migProgressBar');
+
+  let done=0;
+  let failed=0;
+  let savedBytes=0;
+
+  // Helper: convert dataUrl → Blob
+  function dataUrlToBlob(dataUrl){
+    const parts=dataUrl.split(',');
+    if(parts.length<2)return null;
+    const meta=parts[0]||'';
+    const m=meta.match(/data:([^;]+)/);
+    const mime=m?m[1]:'application/octet-stream';
+    try{
+      const bin=atob(parts[1]);
+      const arr=new Uint8Array(bin.length);
+      for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
+      return new Blob([arr],{type:mime});
+    }catch(e){return null;}
+  }
+
+  // Migrate từng file
+  for(let evIdx=0;evIdx<events.length;evIdx++){
+    const ev=events[evIdx];
+    if(!Array.isArray(ev.files))continue;
+    for(let fIdx=0;fIdx<ev.files.length;fIdx++){
+      const f=ev.files[fIdx];
+      if(!f||!f.dataUrl||f.url)continue;
+      try{
+        const blob=dataUrlToBlob(f.dataUrl);
+        if(!blob){console.warn('[Migrate] cannot convert dataUrl for',f.name);failed++;done++;continue;}
+        const ext=(f.name||'file').split('.').pop()||'bin';
+        const path='donvi/'+currentUID+'/files/'+Date.now()+'_'+Math.random().toString(36).slice(2)+'.'+ext;
+        const ref=fbStorage.ref(path);
+        await ref.put(blob,{
+          contentType:blob.type||'application/octet-stream',
+          contentDisposition:'inline; filename="'+(f.name||'file')+'"'
+        });
+        const url=await ref.getDownloadURL();
+        // Cập nhật file: thay dataUrl bằng url + path
+        savedBytes+=f.dataUrl.length;
+        events[evIdx].files[fIdx]={
+          name:f.name,
+          size:f.size||blob.size,
+          type:f.type||blob.type,
+          url:url,
+          path:path
+        };
+        done++;
+        const pct=Math.round(done/totalBase64*100);
+        if(txtEl)txtEl.textContent=done+' / '+totalBase64+' ('+pct+'%)';
+        if(barEl)barEl.style.width=pct+'%';
+        console.log('[Migrate] ✅ '+done+'/'+totalBase64+': '+(f.name||'file'));
+      }catch(err){
+        console.warn('[Migrate] ❌ failed:',f.name,err.message);
+        failed++;done++;
+        const pct=Math.round(done/totalBase64*100);
+        if(txtEl)txtEl.textContent=done+' / '+totalBase64+' ('+pct+'%) — '+failed+' lỗi';
+        if(barEl)barEl.style.width=pct+'%';
+      }
+    }
+  }
+
+  // Save events đã được cập nhật lên Firebase
+  if(txtEl)txtEl.textContent='Đang lưu...';
+  try{
+    await save();
+    const savedMB=(savedBytes/1024/1024).toFixed(2);
+    console.log('[Migrate] ✅ COMPLETE. Migrated:',done-failed,'failed:',failed,'saved:',savedMB,'MB');
+    if(progressEl)progressEl.remove();
+    alert('✅ HOÀN THÀNH TỐI ƯU\n\n'
+      +'• Đã chuyển: '+(done-failed)+' file\n'
+      +'• Lỗi: '+failed+' file\n'
+      +'• Tiết kiệm: ~'+savedMB+' MB\n\n'
+      +'App sẽ load nhanh hơn nhiều từ lúc này.');
+    renderAllNoFetch();
+  }catch(e){
+    if(progressEl)progressEl.remove();
+    alert('⚠️ Đã migrate '+(done-failed)+' file nhưng lưu Firebase lỗi: '+e.message+'\nThử lại sau.');
+    console.error('[Migrate] save error:',e);
+  }
+}
+
 function backupData(){
   // Xuất dữ liệu lịch ra file JSON
   const data={
