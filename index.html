@@ -315,7 +315,7 @@ body.is-tv-viewer .vs-loading-spinner{position:fixed!important;top:0!important;l
 
     <div class="atb-dropdown" style="position:relative;display:inline-block">
       <button class="ab" onclick="toggleManageMenu(event)" id="btnManageMenu">⚙️ Quản lý ▾</button>
-      <div id="manageMenu" class="atb-menu" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1.5px solid #d1d5db;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);padding:6px;margin-top:4px;z-index:9999;min-width:200px">
+      <div id="manageMenu" class="atb-menu" style="display:none;position:fixed;background:#fff;border:1.5px solid #d1d5db;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.25);padding:6px;z-index:99999;min-width:200px">
         <button class="atb-menu-item" onclick="closeManageMenu();backupData()">💾 Sao lưu lịch</button>
         <button class="atb-menu-item" onclick="closeManageMenu();importLich()">📥 Import lịch</button>
         <button class="atb-menu-item" onclick="closeManageMenu();restoreData()">📂 Khôi phục</button>
@@ -1071,7 +1071,7 @@ async function _renderPdfBlob(blob){
 // ════════════════════════════════════════
 // ORG_CONFIG – Chỉnh thông tin này khi triển khai cho cơ quan mới
 // ════════════════════════════════════════
-console.log('[App] Script v2025-05-12m DROPDOWN-MENU loaded');
+console.log('[App] Script v2025-05-12n MENU-FIX loaded');
 
 // ── KHAI BÁO BIẾN TRẠNG THÁI SỚM NHẤT ──
 // Phải ở đầu script để tránh ReferenceError khi event handler (focus/pageshow/visibilitychange)
@@ -5276,15 +5276,22 @@ async function _testGeminiKey(key) {
 function toggleManageMenu(ev){
   if(ev){ev.stopPropagation();}
   var menu=document.getElementById('manageMenu');
-  if(!menu)return;
+  var btn=document.getElementById('btnManageMenu');
+  if(!menu||!btn)return;
   var isOpen=menu.style.display==='block';
-  menu.style.display=isOpen?'none':'block';
-  if(!isOpen){
-    // Click ngoài để đóng menu
-    setTimeout(function(){
-      document.addEventListener('click',_closeMenuOnOutsideClick,{once:true});
-    },10);
+  if(isOpen){
+    menu.style.display='none';
+    return;
   }
+  // Định vị menu ngay dưới button (dùng fixed để thoát overflow của toolbar)
+  var rect=btn.getBoundingClientRect();
+  menu.style.top=(rect.bottom+4)+'px';
+  menu.style.left=rect.left+'px';
+  menu.style.display='block';
+  // Đóng menu khi click ngoài
+  setTimeout(function(){
+    document.addEventListener('click',_closeMenuOnOutsideClick,{once:true});
+  },10);
 }
 function _closeMenuOnOutsideClick(e){
   var menu=document.getElementById('manageMenu');
@@ -5297,6 +5304,9 @@ function closeManageMenu(){
   var menu=document.getElementById('manageMenu');
   if(menu)menu.style.display='none';
 }
+// Đóng menu khi scroll/resize để tránh menu lệch khỏi button
+window.addEventListener('scroll',closeManageMenu,true);
+window.addEventListener('resize',closeManageMenu);
 
 function openApiKeySetting() {
   var inp = document.getElementById('inputApiKey');
