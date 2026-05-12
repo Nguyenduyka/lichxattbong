@@ -1059,7 +1059,7 @@ async function _renderPdfBlob(blob){
 // ════════════════════════════════════════
 // ORG_CONFIG – Chỉnh thông tin này khi triển khai cho cơ quan mới
 // ════════════════════════════════════════
-console.log('[App] Script v2025-05-12i APPCHECK-NEW loaded');
+console.log('[App] Script v2025-05-12j VERIFY-SAVE loaded');
 
 // ── KHAI BÁO BIẾN TRẠNG THÁI SỚM NHẤT ──
 // Phải ở đầu script để tránh ReferenceError khi event handler (focus/pageshow/visibilitychange)
@@ -1456,11 +1456,13 @@ async function _loadViewerData(){
     ]);
     const eventsUrl=urlSnap.val();
     if(eventsUrl){
+      // Tăng timeout lên 60s vì file events.json có thể lên tới hàng chục MB (chứa base64 file đính kèm)
       const resp=await Promise.race([
         fetch(eventsUrl+'&t='+Date.now()),
-        _timeout(10000)
+        _timeout(60000)
       ]);
       const fetched=resp.ok?(await resp.json())||[]:[];
+      console.log('[ViewerData] fetched events.json, length='+fetched.length);
       if(fetched.length>0){
         events=fetched;
         try{localStorage.setItem(STORE_KEY,JSON.stringify(events));}catch(e){}
@@ -1490,7 +1492,7 @@ async function _loadViewerData(){
           _timeout(8000)
         ]);
         const url2=urlSnap2.val();if(!url2)return;
-        const r=await Promise.race([fetch(url2+'&t='+Date.now()),_timeout(10000)]);
+        const r=await Promise.race([fetch(url2+'&t='+Date.now()),_timeout(60000)]);
         const incoming=r.ok?(await r.json())||[]:[];
         if(_sig(incoming)===_sig(events))return;
         const unseenNew=incoming.filter(e=>e.isNew&&e.isNew>0&&!_seenNewTs.has(e.isNew));
@@ -2201,15 +2203,44 @@ const save=()=>{
         return storageRef.getDownloadURL();
       })
       .then(url=>{
-        console.log('[Save] got URL, updating database refs');
+        console.log('[Save] got URL, updating database refs. URL='+url.slice(0,80)+'...');
         return Promise.all([
           fbDb.ref('donvi/'+currentUID+'/events_file').set(url),
           fbDb.ref('donvi/'+currentUID+'/last_update').set(Date.now())
-        ]);
+        ]).then(()=>url);
       })
-      .then(()=>{
+      .then(savedUrl=>{
         console.log('[Save] ✅ Firebase save complete');
         _lastSaveError=null;
+        // Verify: đọc lại events_file để chắc chắn URL đã được lưu đúng
+        return fbDb.ref('donvi/'+currentUID+'/events_file').once('value').then(snap=>{
+          const storedUrl=snap.val();
+          if(storedUrl===savedUrl){
+            console.log('[Save] ✅ Verified: events_file URL stored correctly');
+          } else {
+            console.error('[Save] ❌ MISMATCH! URL saved differs from URL in Database!');
+            console.log('  Expected:',savedUrl);
+            console.log('  Got:',storedUrl);
+            showToast('⚠️ Lưu lỗi: URL không khớp. Reload có thể không có data mới.');
+          }
+          // Verify: thử fetch lại file vừa upload xem có đúng số lượng events không
+          return fetch(savedUrl+'&t='+Date.now()).then(r=>r.ok?r.json():null).then(verifyData=>{
+            if(Array.isArray(verifyData)){
+              if(verifyData.length===events.length){
+                console.log('[Save] ✅ Verified: file content has '+verifyData.length+' events (match)');
+              } else {
+                console.error('[Save] ❌ FILE CONTENT MISMATCH!');
+                console.log('  Local events:',events.length);
+                console.log('  Uploaded file:',verifyData.length);
+                showToast('⚠️ Upload không đầy đủ! Server có '+verifyData.length+' events, local có '+events.length);
+              }
+            } else {
+              console.warn('[Save] ⚠️ Could not verify file content');
+            }
+          }).catch(e=>console.warn('[Save] verify fetch failed:',e.message));
+        });
+      })
+      .then(()=>{
         if(seq===_saveSeq) bc.postMessage({type:'eventsUpdate',events});
       })
       .catch(err=>{
@@ -4810,7 +4841,7 @@ function trackVisit(){
     console.log('[Boot] fbReady='+fbReady+', events='+events.length);
     setLoadProgress(50);
 
-    // Bước 2: Chờ _loadViewerData load xong từ Firebase (tối đa 12s)
+    // Bước 2: Chờ _loadViewerData load xong từ Firebase (tối đa 60s cho file lớn)
     if(fbReady && events.length===0){
       console.log('[Boot] waiting for Firebase data...');
       await Promise.race([
@@ -4819,8 +4850,8 @@ function trackVisit(){
             if(events.length>0||!fbReady){clearInterval(_check);resolve();}
           },200);
         }),
-        _T(12000)
-      ]).catch(()=>{console.warn('[Boot] Firebase data timeout after 12s');});
+        _T(60000)
+      ]).catch(()=>{console.warn('[Boot] Firebase data timeout after 60s');});
       console.log('[Boot] events after Firebase wait='+events.length);
     }
 
