@@ -168,6 +168,10 @@ body.is-tv-viewer .vs-loading-spinner{position:fixed!important;top:0!important;l
 .pwa-btn{background:var(--red);color:#fff;border:none;border-radius:20px;padding:9px 18px;font:700 12px/1 'Be Vietnam Pro',sans-serif;cursor:pointer;white-space:nowrap;flex-shrink:0;-webkit-tap-highlight-color:transparent}
 .pwa-btn:active{background:var(--red2)}
 .pwa-x{background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer;padding:2px 6px;flex-shrink:0;line-height:1;-webkit-tap-highlight-color:transparent}
+.atb-menu-item{display:block;width:100%;padding:9px 14px;background:transparent;border:none;border-radius:6px;font-family:'Be Vietnam Pro',sans-serif;font-size:12.5px;font-weight:600;color:var(--ink);cursor:pointer;text-align:left;transition:background .12s}
+.atb-menu-item:hover{background:#eef4fb;color:#1e5a96}
+.atb-menu-item[style*="e74c3c"]:hover{background:#fdeaea}
+.atb-menu-item[style*="16a34a"]:hover{background:#e8f5ec}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -308,13 +312,20 @@ body.is-tv-viewer .vs-loading-spinner{position:fixed!important;top:0!important;l
     <button class="ab" id="btnTV" onclick="toggleTV()">📺 Bật chiếu lịch</button>
     <button class="ab" onclick="openPrintModal()">🖨️ In lịch</button>
     <button class="ab" onclick="openThongKe()">📊 Thống kê</button>
-    <button class="ab" onclick="backupData()">💾 Sao lưu lịch</button>
-    <button class="ab" onclick="importLich()">📥 Import lịch</button>
-    <button class="ab" style="color:#16a34a;border-color:#16a34a" onclick="migrateBase64Files()" title="Chuyển file đính kèm base64 cũ lên Firebase Storage để giảm dung lượng">🔄 Tối ưu file</button>
-    <button class="ab" style="color:#e74c3c;border-color:#e74c3c" onclick="clearAll()">🗑 Xoá tất cả lịch</button>
-    <button class="ab" onclick="restoreData()">📂 Khôi phục</button>
 
-    <button class="ab" onclick="openApiKeySetting()" title="Cài đặt AI">🤖 API Key</button>
+    <div class="atb-dropdown" style="position:relative;display:inline-block">
+      <button class="ab" onclick="toggleManageMenu(event)" id="btnManageMenu">⚙️ Quản lý ▾</button>
+      <div id="manageMenu" class="atb-menu" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1.5px solid #d1d5db;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.15);padding:6px;margin-top:4px;z-index:9999;min-width:200px">
+        <button class="atb-menu-item" onclick="closeManageMenu();backupData()">💾 Sao lưu lịch</button>
+        <button class="atb-menu-item" onclick="closeManageMenu();importLich()">📥 Import lịch</button>
+        <button class="atb-menu-item" onclick="closeManageMenu();restoreData()">📂 Khôi phục</button>
+        <button class="atb-menu-item" onclick="closeManageMenu();migrateBase64Files()" style="color:#16a34a">🔄 Tối ưu file</button>
+        <button class="atb-menu-item" onclick="closeManageMenu();openApiKeySetting()">🤖 API Key</button>
+        <div style="height:1px;background:#e5e7eb;margin:5px 0"></div>
+        <button class="atb-menu-item" onclick="closeManageMenu();clearAll()" style="color:#e74c3c">🗑 Xoá tất cả lịch</button>
+      </div>
+    </div>
+
     <button class="ab" style="color:#7c3aed;border-color:#7c3aed" onclick="openThongBaoNhanh()" title="Gửi thông báo nhanh đến điện thoại">📢 Thông báo</button>
     <button class="ab pri" onclick="openAdd()">＋ Thêm lịch</button>
   </div>
@@ -1060,7 +1071,7 @@ async function _renderPdfBlob(blob){
 // ════════════════════════════════════════
 // ORG_CONFIG – Chỉnh thông tin này khi triển khai cho cơ quan mới
 // ════════════════════════════════════════
-console.log('[App] Script v2025-05-12l MIGRATE loaded');
+console.log('[App] Script v2025-05-12m DROPDOWN-MENU loaded');
 
 // ── KHAI BÁO BIẾN TRẠNG THÁI SỚM NHẤT ──
 // Phải ở đầu script để tránh ReferenceError khi event handler (focus/pageshow/visibilitychange)
@@ -5257,6 +5268,34 @@ async function _testGeminiKey(key) {
     );
     return res.status; // trả về status code để phân tích
   } catch(e) { return 0; }
+}
+
+// ════════════════════════════════════════
+// MANAGE MENU dropdown (gộp các nút quản lý vào 1 menu)
+// ════════════════════════════════════════
+function toggleManageMenu(ev){
+  if(ev){ev.stopPropagation();}
+  var menu=document.getElementById('manageMenu');
+  if(!menu)return;
+  var isOpen=menu.style.display==='block';
+  menu.style.display=isOpen?'none':'block';
+  if(!isOpen){
+    // Click ngoài để đóng menu
+    setTimeout(function(){
+      document.addEventListener('click',_closeMenuOnOutsideClick,{once:true});
+    },10);
+  }
+}
+function _closeMenuOnOutsideClick(e){
+  var menu=document.getElementById('manageMenu');
+  var btn=document.getElementById('btnManageMenu');
+  if(menu&&!menu.contains(e.target)&&e.target!==btn){
+    menu.style.display='none';
+  }
+}
+function closeManageMenu(){
+  var menu=document.getElementById('manageMenu');
+  if(menu)menu.style.display='none';
 }
 
 function openApiKeySetting() {
