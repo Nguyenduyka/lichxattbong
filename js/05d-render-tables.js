@@ -393,7 +393,7 @@ function renderAdminTable(ws,wxd){
 }
 
 function aEmptyRow(ds,ses,itd){
-  return`<tr><td class="td-ases-empty"></td><td class="td-aev td-add${itd?' td-today-s':''}" colspan="5" onclick="openAddDs('${ds}','${ses}')"><div class="add-hint">＋ Thêm lịch ${ses==='sang'?'sáng':'chiều'}</div></td></tr>`;
+  return`<tr><td class="td-ases-empty"></td><td class="td-aev td-add${itd?' td-today-s':''}" colspan="5" onclick="openAddDs('${ds}','${ses}')"><div class="add-hint">＋ Thêm Lịch công tác</div></td></tr>`;
 }
 
 function aEvRow(ds,ses,itd,e,isLast){
