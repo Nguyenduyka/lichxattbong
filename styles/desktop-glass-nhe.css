@@ -1,0 +1,89 @@
+/* ============================================================
+   DESKTOP GLASS — PHƯƠNG ÁN NHẸ
+   Giữ bản sắc đỏ-be trang nghiêm của cơ quan nhà nước,
+   thêm chiều sâu hiện đại: nền gradient tinh tế, thẻ kính mờ,
+   bóng đổ mềm. CHỈ áp dụng cho màn hình lớn (>600px).
+   KHÔNG áp dụng cho chế độ TV (body.is-tv) và khi in.
+   Nạp SAU main.css. Mobile giữ nguyên 100%.
+   ============================================================ */
+
+@media (min-width: 601px) {
+
+  /* Nền tổng thể: gradient be ấm rất nhẹ, có chiều sâu */
+  body:not(.is-tv):not(.is-tv-viewer) {
+    background:
+      radial-gradient(ellipse 70% 50% at 80% 0%, rgba(192,57,43,.05), transparent 60%),
+      radial-gradient(ellipse 60% 50% at 0% 100%, rgba(200,144,10,.05), transparent 55%),
+      linear-gradient(160deg, #f7f3ee 0%, #f2ece4 100%) !important;
+  }
+
+  /* Header: thêm chiều sâu, viền sáng dưới, bóng đổ rõ hơn */
+  body:not(.is-tv) .pg-hdr {
+    box-shadow: 0 4px 24px rgba(140,24,18,.22), inset 0 -1px 0 rgba(255,255,255,.12);
+  }
+  /* Con dấu quốc huy: đổ bóng nhẹ tạo nổi khối */
+  body:not(.is-tv) .hdr-seal {
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,.25));
+  }
+
+  /* Thanh thời tiết: kính mờ */
+  body:not(.is-tv) .wx-box {
+    background: rgba(255,255,255,.14) !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,.22) !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,.12);
+  }
+
+  /* Thanh điều hướng: nền kính, tách khỏi header bằng bóng nhẹ */
+  body:not(.is-tv) .vs-nav-bar {
+    background: linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,.3)) !important;
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(192,57,43,.12);
+    box-shadow: 0 2px 12px rgba(0,0,0,.05);
+  }
+  /* Nút ribbon: nổi khối nhẹ, hover nhấc lên */
+  body:not(.is-tv) .rib-btn {
+    background: rgba(255,255,255,.85) !important;
+    border: 1px solid rgba(192,57,43,.2) !important;
+    box-shadow: 0 2px 6px rgba(140,24,18,.1);
+    transition: transform .15s, box-shadow .15s, background .15s;
+  }
+  body:not(.is-tv) .rib-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 14px rgba(140,24,18,.18);
+    background: #fff !important;
+  }
+
+  /* Vùng bảng lịch: card nổi trên nền, bo góc, bóng mềm */
+  body:not(.is-tv) .vs-tbl-outer {
+    margin: 14px 20px 0;
+    border-radius: 16px;
+    overflow: hidden;
+    background: rgba(255,255,255,.7);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,.8);
+    box-shadow: 0 10px 36px rgba(140,24,18,.1), 0 2px 8px rgba(0,0,0,.04);
+  }
+
+  /* Footer desktop: tách nhẹ, nền kính */
+  body:not(.is-tv) .vs-footer-desktop {
+    background: rgba(255,255,255,.55) !important;
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(192,57,43,.1);
+  }
+
+  /* Hàng lịch hover: làm nổi dòng đang xem */
+  body:not(.is-tv) .vs-tbl tbody tr:hover {
+    background: rgba(192,57,43,.04) !important;
+  }
+}
+
+/* Bảo hiểm: in ấn không dùng hiệu ứng kính (tương phản cao) */
+@media print {
+  .vs-tbl-outer, .wx-box, .vs-nav-bar, .vs-footer-desktop, .rib-btn {
+    background: #fff !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+}
