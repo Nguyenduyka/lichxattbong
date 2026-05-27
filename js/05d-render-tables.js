@@ -393,26 +393,26 @@ function renderAdminTable(ws,wxd){
 }
 
 function aEmptyRow(ds,ses,itd){
-  return`<tr><td class="td-ases-empty"></td><td class="td-aev td-add${itd?' td-today-s':''}" colspan="5" onclick="openAddDs('${ds}','${ses}')"><div class="add-hint">＋ Thêm Lịch công tác</div></td></tr>`;
+  return`<tr><td class="td-ases-empty"></td><td class="td-aev td-add${itd?' td-today-s':''}" colspan="5" onclick="openAddDs('${ds}','${ses}')"><div class="add-hint">＋ Thêm Lịch làm việc</div></td></tr>`;
 }
 
 function aEvRow(ds,ses,itd,e,isLast){
-  const fileList=(e.files||[]);
-  const files=fileList.length?
-    fileList.map((f,fi)=>`<div class="ad-file-btn" onclick="openFile(events.find(x=>x.id==${e.id}).files[${fi}]);event.stopPropagation()" title="${escAttr(f.name)}"><span class="ad-file-ico">📄</span><span class="ad-file-name">File đi kèm</span><span class="ad-file-type">${esc(fLabel(f.type,f.name))}</span></div>`).join(' '):'';
-
+  const fb=(e.files||[]).map((f,fi)=>`<span class="ace-fb" onclick="openFile(events.find(x=>x.id==${e.id}).files[${fi}]);event.stopPropagation()" style="cursor:pointer" title="${escAttr(f.name)}">${fIcon(f.type)} File đi kèm</span>`).join('');
   return`<tr>
-    <td class="td-aev td-add${itd?' td-today-s':''}" colspan="6" onclick="openEdit(${e.id})">
-      <div class="ad-ev-card">
-        <div class="ad-ev-time">🕒 ${e.time?esc(e.time):'--:--'}</div>
-        <div class="ad-ev-content">
-          <div class="ad-ev-title">${catOf(e).icon} ${esc(e.title)}${isHoan(e)?'<span class="badge-hoan">⏸ Hoãn</span>':''}${e.isNew&&e.isNew>0?'<span class="badge-new">NEW</span>':''}</div>
-          <div class="ad-ev-files">${files}</div>
-        </div>
+    <td class="td-ases-empty"></td>
+    <td class="td-aev td-add${itd?' td-today-s':''}" onclick="openEdit(${e.id})">
+      <div class="acard ac-admin-${e.cat}">
+        ${e.time?`<div class="ace-t">🕐 ${esc(e.time)}</div>`:''}
+        <div class="ace-title">${catOf(e).icon} ${esc(e.title)}${isHoan(e)?'<span class="badge-hoan">⏸ Hoãn</span>':''}${e.isNew&&e.isNew>0?'<span class="badge-new">NEW</span>':''}</div>
+        ${fb?`<div class="ace-files">${fb}</div>`:''}
       </div>
-      ${isLast?`<div class="add-hint" onclick="openAddDs('${ds}','${ses}');event.stopPropagation()">＋ Thêm Lịch công tác</div>`:''}
+      ${isLast?`<div class="add-hint" onclick="openAddDs('${ds}','${ses}');event.stopPropagation()">＋ Thêm Lịch làm việc</div>`:''}
     </td>
-</tr>`;
+    <td class="td-aev${itd?' td-today-s':''}" style="font-size:11px;color:var(--muted);vertical-align:middle;padding:5px 8px!important">${e.chair?esc(e.chair):'—'}</td>
+    <td class="td-aev${itd?' td-today-s':''}" style="font-size:11px;color:var(--muted);vertical-align:middle;padding:5px 8px!important">${e.location?'📍 '+esc(e.location):'—'}</td>
+    <td class="td-aev${itd?' td-today-s':''}" style="font-size:10.5px;color:var(--subtle);vertical-align:middle;padding:5px 8px!important">${esc(e.member)||'—'}</td>
+    <td class="td-aev${itd?' td-today-s':''}" style="font-size:10.5px;color:var(--subtle);vertical-align:middle;padding:5px 8px!important">${esc(e.prep)||'—'}</td>
+  </tr>`;
 }
 
 function renderSummary(ws){
