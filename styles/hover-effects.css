@@ -22,16 +22,18 @@
   body.is-admin .td-aev.td-add { text-align: center; }
   body.is-admin .td-aev.td-add .add-hint {
     position: relative;
-    display: inline-flex !important;   /* co vừa nội dung, KHÔNG full chiều rộng */
-    width: auto !important;
-    margin: 4px auto;                  /* căn giữa trong ô */
-    border-radius: 9px;
-    padding: 6px 16px;                 /* gọn, vừa chữ "+ Thêm lịch" */
+    display: block !important;       /* Chiếm toàn bộ dòng */
+    width: 100% !important;          /* To bằng chiều rộng ô nhập lịch */
+    box-sizing: border-box;
+    margin: 8px 0;                  /* Tạo khoảng cách trên dưới */
+    border-radius: 8px;
+    padding: 8px 0;                 /* Padding trên dưới, không cần trái phải vì đã width 100% */
     font-weight: 700;
-    font-size: 11px;
+    font-size: 12px;
     white-space: nowrap;
     color: var(--red);
     background-color: rgba(192,57,43,.04);
+    text-align: center;             /* Chữ + Thêm nằm giữa dải ngang */
     /* 4 viền nét đứt */
     background-image:
       repeating-linear-gradient(90deg,  var(--red) 0 8px, transparent 8px 16px),
