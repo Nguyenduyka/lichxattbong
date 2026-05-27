@@ -18,8 +18,8 @@
 /* ===== 1) ADMIN DESKTOP — nút Thêm lịch sáng/chiều ===== */
 /* Chỉ áp desktop (>600px), khi hover vào ô .td-add */
 @media (min-width: 601px) {
-  /* Ô chứa nút: căn giữa để nút gọn nằm giữa, không lệch */
-  body.is-admin .td-aev.td-add { text-align: center; }
+  /* Nội dung lịch và thời gian canh trái */
+  body.is-admin .td-aev.td-add { text-align: left; }
   body.is-admin .td-aev.td-add .add-hint {
     position: relative;
     display: block !important;       /* Chiếm toàn bộ dòng */
@@ -27,7 +27,7 @@
     box-sizing: border-box;
     margin: 8px 0;                  /* Tạo khoảng cách trên dưới */
     border-radius: 8px;
-    padding: 8px 0;                 /* Padding trên dưới, không cần trái phải vì đã width 100% */
+    padding: 8px 0;                 /* Padding trên dưới */
     font-weight: 700;
     font-size: 12px;
     white-space: nowrap;
