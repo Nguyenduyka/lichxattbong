@@ -1,1 +1,0 @@
-window.OneSignalDeferred = window.OneSignalDeferred || [];
