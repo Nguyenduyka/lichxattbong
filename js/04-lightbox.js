@@ -42,11 +42,8 @@ function lbZoom(dir){
   // Pan khi zoom state
   var _panStartX=0, _panStartY=0, _panStartTx=0, _panStartTy=0;
   var _isPan=false;
-  // Cờ phân biệt pinch / di chuyển với chạm-gõ (tap) để không reset nhầm khi nhả pinch
-  var _tapMoved=false;
-  // Theo dõi trong CẢ lượt chạm (từ lúc đặt ngón đầu đến khi nhả hết): số ngón tối đa
-  // và đã từng có gesture phóng to chưa. Dùng để biết chắc đây có phải tap đơn thuần không.
-  var _seqMaxTouches=0, _seqHadGesture=false;
+  // Cờ phân biệt tap với pinch/di chuyển + theo dõi cả lượt chạm (chống reset nhầm khi nhả pinch)
+  var _tapMoved=false, _seqMaxTouches=0, _seqHadGesture=false;
 
   // Ngăn pull-to-refresh khi lightbox mở (iOS/Android)
   document.addEventListener('touchmove', function(e){
@@ -119,7 +116,6 @@ function lbZoom(dir){
           wrap._lastTap = now;
         }
       }
-      // Reset cờ cho lượt chạm kế tiếp
       _seqMaxTouches = 0; _seqHadGesture = false; _tapMoved = false;
     }
   });
