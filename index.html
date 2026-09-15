@@ -142,6 +142,16 @@
     <button class="np-clr" id="npClrBtn" onclick="clearNotifPanel()" style="display:none">✓ Đánh dấu đã đọc tất cả</button>
     <div class="np-list" id="npList"><div class="np-empty">Không có thông báo mới</div></div>
   </div>
+
+  <!-- Modal xem chi tiết lịch từ thông báo (desktop) -->
+  <div class="overlay" id="ovNpDetail">
+    <div class="modal sm" style="max-width:460px">
+      <div class="modal-handle"></div>
+      <div class="mh"><h2 id="npdHdrTitle">📅 Chi tiết lịch</h2><button class="mx" onclick="closeNpDetail()">✕</button></div>
+      <div class="mb" id="npdBody" style="gap:12px"></div>
+      <div class="mf"><div></div><div class="mf-r"><button class="bc" onclick="closeNpDetail()">Đóng</button></div></div>
+    </div>
+  </div>
   
   <button id="desktopLoginBtn" onclick="openLogin()" title="Đăng nhập quản trị (Ctrl+Shift+A)" style="position:fixed;bottom:20px;right:20px;width:44px;height:44px;border-radius:50%;background:rgba(140,24,18,.88);border:2px solid rgba(255,255,255,.2);color:#fff;font-size:18px;cursor:pointer;z-index:50;box-shadow:0 3px 14px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;transition:opacity .2s,transform .2s;opacity:.75" onmouseover="this.style.opacity=1;this.style.transform='scale(1.1)'" onmouseout="this.style.opacity=.75;this.style.transform=''">🔐</button>
   <div id="loginBtnTip" style="position:fixed;bottom:70px;right:10px;background:rgba(0,0,0,.75);color:#fff;font-size:10px;font-weight:700;padding:4px 10px;border-radius:10px;white-space:nowrap;z-index:50;pointer-events:none;opacity:0;transition:opacity .2s">Đăng nhập quản trị</div>
