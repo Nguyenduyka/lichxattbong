@@ -352,7 +352,8 @@ return;}
 
     // Load viewer data + setup auth song song, KHÔNG block initFirebase resolve
     // initFirebase trả về ngay sau khi SDK init xong
-    _loadViewerData().catch(e=>logWarn('[Firebase] _loadViewerData error:',e));
+    // Dùng bản có tự động thử lại (mạng yếu/timeout) thay vì gọi 1 lần rồi bỏ cuộc.
+    _loadViewerDataAuto();
     _startPushTriggerListener();
     if(_osReady&&window._osSdkRef) _saveOSPlayerId(window._osSdkRef);
 
@@ -399,14 +400,15 @@ return;}
         // (admin events khác viewer events, không thể giữ lại)
         try{
           _stopViewerListener();
-          await _loadViewerData();
+          _viewerDataRetryCount=0;
+          await _loadViewerDataAuto();
           renderAllNoFetch();
         }catch(e2){logWarn('[Auth] viewer reload failed:',e2);}
         if(_autoTV&&!tvOn){setTimeout(()=>{startTV();try{bc.postMessage({type:'tvOn'});}catch(e){}},500);}
       }
       }catch(e){
         logErr('[Auth] error:',e);
-        try{await _loadViewerData();}catch(e2){}
+        try{await _loadViewerDataAuto();}catch(e2){}
         renderAllNoFetch();
         if(_autoTV&&!tvOn){setTimeout(()=>{startTV();try{bc.postMessage({type:'tvOn'});}catch(e2){}},500);}
       }
@@ -538,6 +540,53 @@ async function _loadViewerData(){
 }
 
 function _stopViewerListener(){if(_viewerRef){try{_viewerRef.off();}catch(e){};_viewerRef=null;}}
+
+// ── AUTO-RETRY khi tải dữ liệu viewer thất bại (mạng yếu/timeout) ──────
+// _loadViewerData() có thể fail do timeout (8s/60s bên trong) khi sóng yếu
+// (3G/4G chập chờn). Trước đây: fail 1 lần là bỏ luôn, khiến renderAll()
+// không có _viewerRef nên rơi vào dữ liệu mẫu (samples()) — hiển thị SAI lịch.
+// Giờ: tự thử lại với backoff tăng dần, không cần người dùng reload trang.
+let _viewerDataRetryCount = 0;
+const _VIEWER_DATA_MAX_RETRY = 6; // ~3s,6s,12s,24s,30s,30s ≈ tối đa ~1'45"
+async function _loadViewerDataAuto(){
+  try{
+    await _loadViewerData();
+  }catch(e){
+    logWarn('[ViewerData] lỗi khi tải:', e.message||e);
+  }
+  if(currentUID) return; // đang ở admin mode, không cần lo viewer nữa
+  if(_viewerRef){
+    // Thành công → reset đếm retry, gỡ trạng thái lỗi nếu đang hiện, vẽ lại lịch thật
+    _viewerDataRetryCount = 0;
+    try{
+      var _spD=document.getElementById('vsLoadingSpinner');
+      var _spM=document.getElementById('vsLoadingSpinnerMob');
+      var _hadErr=(_spD&&_spD.classList.contains('is-load-error'))||(_spM&&_spM.classList.contains('is-load-error'));
+      if(_hadErr||(typeof events!=='undefined'&&events&&events.length>0)){
+        if(typeof renderAllNoFetch==='function') renderAllNoFetch();
+        if(typeof removeLoadingSpinner==='function') removeLoadingSpinner();
+      }
+    }catch(e){}
+    return;
+  }
+  // Thất bại → thử lại sau (backoff tăng dần), tối đa _VIEWER_DATA_MAX_RETRY lần
+  if(_viewerDataRetryCount < _VIEWER_DATA_MAX_RETRY){
+    _viewerDataRetryCount++;
+    const delay = Math.min(3000 * Math.pow(2, _viewerDataRetryCount-1), 30000);
+    log('[ViewerData] sẽ thử lại lần '+_viewerDataRetryCount+' sau '+delay+'ms');
+    setTimeout(function(){
+      if(!_viewerRef && !currentUID) _loadViewerDataAuto();
+    }, delay);
+  } else {
+    logWarn('[ViewerData] đã thử tối đa '+_VIEWER_DATA_MAX_RETRY+' lần, dừng auto-retry.');
+  }
+}
+window._loadViewerDataAuto = _loadViewerDataAuto;
+// Cho phép UI (nút "Tải lại" / bấm vào chuông) kích hoạt thử lại ngay lập tức
+window._retryViewerDataNow = function(){
+  _viewerDataRetryCount = 0;
+  _loadViewerDataAuto();
+};
 let _adminPollTimer=null;
 let _pollAdminFn=null; // exposed để setInterval gọi được từ ngoài scope
 function _startAdminPollTimer(){

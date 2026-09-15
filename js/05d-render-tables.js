@@ -176,10 +176,20 @@ async function renderAll(skipFetch){
     // Viewer đang có data từ _loadViewerData → không reset events
     if(_viewerRef){
       // Đã có viewer listener, giữ nguyên events
+    } else if(!fbReady){
+      // Firebase THỰC SỰ chưa cấu hình (vd chạy demo cục bộ, chưa điền
+      // FB_CONFIG) → không có nguồn dữ liệu thật nào để lấy, chỉ khi đó mới
+      // dùng dữ liệu mẫu để demo giao diện lần đầu.
+      if(!events || events.length===0) events = samples();
     } else {
-      // Không có Firebase và không phải viewer (backend chưa sẵn sàng):
-      // không còn localStorage → dùng dữ liệu mẫu tạm cho lần hiển thị đầu.
-      events = samples();
+      // Firebase ĐÃ cấu hình nhưng chưa lấy được dữ liệu THẬT (mạng yếu/
+      // timeout lúc tải lần đầu). TUYỆT ĐỐI không hiện dữ liệu mẫu ở đây vì
+      // dễ khiến người dùng tưởng nhầm là lịch thật (đây chính là lỗi đã
+      // xảy ra: lịch hiển thị sai vào những lúc sóng yếu).
+      // → âm thầm thử tải lại dữ liệu viewer ở nền, và nếu vẫn chưa có gì để
+      // hiển thị thì báo lỗi mạng rõ ràng kèm nút "Tải lại" thay vì lịch giả.
+      if(typeof _loadViewerDataAuto==='function') _loadViewerDataAuto();
+      if((!events||events.length===0) && typeof showLoadError==='function') showLoadError();
     }
   }
   // Bước 3: Render (70% → 90%, rồi removeLoadingSpinner tự đẩy 100%)
@@ -288,7 +298,7 @@ function renderVsTable(ws,wxd){
     const eT=dayEvs(ds,'toi');const nS=Math.max(eS.length,1),nC=Math.max(eC.length,1),nT=eT.length,nR=2+nS+nC+(nT>0?1+nT:0);
 
     // Session sáng header
-    html+=`<tr>
+    html+=`<tr data-date="${ds}">
       <td class="td-day ${dc}" rowspan="${nR}">
         <div class="vd-dow">${viDow(d.getDay())}</div>
         <div class="vd-num">${String(d.getDate()).padStart(2,'0')}</div>
@@ -332,7 +342,7 @@ function vsEvRow(e,itd){
   const fileList=(e.files||[]);
   const files=fileList.length?
     ` `+fileList.map((f,fi)=>`<span class="ev-fb" onclick="openFile(events.find(x=>x.id==${e.id}).files[${fi}]);event.stopPropagation()" style="background:${fBg(f.type)};border-color:${fBorder(f.type)};color:${fColor(f.type)}" title="${escAttr(f.name||'File đi kèm')}"><span class="ev-fb-ico">${fIcon(f.type)}</span><span class="ev-fb-name">File đi kèm</span><span style="font-size:8.5px;font-weight:800;background:${fColor(f.type)};color:#fff;border-radius:3px;padding:1px 4px;margin-left:2px;flex-shrink:0">${esc(fLabel(f.type,f.name))}</span></span>`).join(' '):'';
-  return`<tr class="tr-ev${itd?' tr-today':''}${isHoan(e)?' ev-hoan':''}">
+  return`<tr class="tr-ev${itd?' tr-today':''}${isHoan(e)?' ev-hoan':''}" data-evid="${e.id}">
     <td class="td-ses-empty"></td>
     <td class="td-ct ac-${e.cat}">${e.time?`<div class="ev-time">🕐 ${esc(e.time)}</div>`:''}<div class="ev-title">${catOf(e).icon} ${esc(e.title)}${isHoan(e)?' <span class="ev-hoan-badge">⏸ Hoãn</span>':''}${e.isNew&&e.isNew>0?' <span class="ev-new-badge">NEW</span>':''}${files}</div></td>
     <td class="td-ch">${esc(e.chair)||'—'}</td>

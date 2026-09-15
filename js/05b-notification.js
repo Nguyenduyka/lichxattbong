@@ -114,31 +114,14 @@ function setTitleBadge(count){
 }
 
 // 4. Badge đỏ trong giao diện
+// TRƯỚC ĐÂY: tạo 1 chấm đỏ nổi cố định (position:fixed top:12px;right:12px)
+// đè ngay lên góc phải màn hình — đúng chỗ ô thời tiết trong header, gây rối
+// giao diện. Giờ đã có nút chuông riêng (#hdrNotifBell) nằm cạnh ô thời tiết
+// với badge số gắn liền vào chuông, nên bỏ hẳn badge nổi kiểu cũ này.
 function setUiBadge(count){
-  // Badge góc phải chỉ hiện trên desktop — mobile dùng badge trên nav chuông
-  let badge=document.getElementById('notifBadge');
-  if(!badge){
-    badge=document.createElement('div');
-    badge.id='notifBadge';
-    badge.style.cssText='position:fixed;top:12px;right:12px;z-index:9998;background:#c0392b;color:#fff;font-size:11px;font-weight:900;font-family:\'Be Vietnam Pro\',sans-serif;min-width:20px;height:20px;border-radius:10px;display:none;align-items:center;justify-content:center;padding:0 5px;box-shadow:0 2px 8px rgba(192,57,43,.5);cursor:pointer;border:2px solid #fff;animation:badgePop .3s ease;';
-    badge.title='Có lịch mới được cập nhật';
-    badge.onclick=function(){clearNotif();};
-    if(!document.getElementById('badgeStyle')){
-      const s=document.createElement('style');
-      s.id='badgeStyle';
-      s.textContent='@keyframes badgePop{from{transform:scale(0)}to{transform:scale(1)}}'+
-        '@media(max-width:600px){#notifBadge{display:none!important}}';
-      document.head.appendChild(s);
-    }
-    document.body.appendChild(badge);
-  }
-  if(count>0){
-    badge.textContent=count>9?'9+':String(count);
-    // Chỉ hiện trên desktop
-    badge.style.display=window.innerWidth>600?'flex':'none';
-  } else {
-    badge.style.display='none';
-  }
+  // Dọn phần tử cũ nếu còn sót lại từ bản trước (cache/Service Worker cũ)
+  const old=document.getElementById('notifBadge');
+  if(old && old.parentNode) old.parentNode.removeChild(old);
 }
 
 // 5. Push notification
@@ -330,7 +313,17 @@ async function _scrollToDate(dateStr, evId){
   const target=new Date(dateStr+'T00:00:00');
   if(isNaN(target.getTime())) return;
   const todayWk=wkStart(0);
-  const diffWk=Math.round((target-todayWk)/(7*24*3600*1000));
+  // QUAN TRỌNG: phải tính hiệu số tuần dựa trên NGÀY THỨ HAI của tuần chứa
+  // target, KHÔNG dùng trực tiếp ngày target. Nếu dùng ngày target thô, các
+  // sự kiện rơi vào Thứ 5/6/7/CN của tuần hiện tại (lệch 4-6 ngày so với Thứ
+  // Hai) sẽ bị Math.round() làm tròn LÊN thành tuần kế tiếp một cách sai lệch
+  // → bấm thông báo không nhảy đến đúng tuần/vị trí (đặc biệt rõ khi đang
+  // xem các tuần sau tuần hiện tại, vì lệch tuần cộng dồn sai luôn theo).
+  const targetWk=new Date(target);
+  const _dow=targetWk.getDay(); // 0=CN..6=T7
+  targetWk.setDate(targetWk.getDate()-(_dow===0?6:_dow-1));
+  targetWk.setHours(0,0,0,0);
+  const diffWk=Math.round((targetWk-todayWk)/(7*24*3600*1000));
 
   // Nếu khác tuần → chuyển tuần và chờ render xong
   if(diffWk!==wkOff){
@@ -397,7 +390,15 @@ async function _scrollToDate(dateStr, evId){
           tblInner.scrollTop=tblInner.scrollTop+(eTop-innerTop)-60;
           evEl2.classList.add('hl');
           setTimeout(function(){evEl2.classList.remove('hl');},5000);
+        } else {
+          // Không tìm thấy đúng dòng lịch (VD: id đổi) → vẫn nhấp nháy cả ngày để user thấy vị trí
+          row.classList.add('hl');
+          setTimeout(function(){row.classList.remove('hl');},5000);
         }
+      } else {
+        // Không có evId cụ thể → nhấp nháy nguyên ngày để dễ nhận biết
+        row.classList.add('hl');
+        setTimeout(function(){row.classList.remove('hl');},5000);
       }
     }
   }
@@ -433,13 +434,26 @@ function openNotifPanel(){
   if(typeof _syncAllBadges==='function') _syncAllBadges();
   _renderNotifPanel();
   if(typeof _syncAllBadges==='function') _syncAllBadges();
-  document.getElementById('notifPanel').classList.add('open');
+  // Định vị panel NGAY DƯỚI nút chuông (desktop) thay vì toạ độ cố định đoán
+  // trước — panel sẽ luôn "xổ xuống" đúng ngay chuông dù chuông ở vị trí nào.
+  const panel=document.getElementById('notifPanel');
+  const bell=document.getElementById('hdrNotifBell');
+  if(bell && panel && window.innerWidth>600){
+    const r=bell.getBoundingClientRect();
+    panel.style.top=(r.bottom+8)+'px';
+    panel.style.left='auto';
+    panel.style.right=Math.max(12,window.innerWidth-r.right)+'px';
+    bell.classList.add('open');
+  }
+  panel.classList.add('open');
   document.getElementById('npOverlay').classList.add('open');
 }
 
 function closeNotifPanel(){
   document.getElementById('notifPanel').classList.remove('open');
   document.getElementById('npOverlay').classList.remove('open');
+  const bell=document.getElementById('hdrNotifBell');
+  if(bell) bell.classList.remove('open');
 }
 
 function clearNotifPanel(){
@@ -557,10 +571,18 @@ function _npItemClick(el){
 }
 
 function _updateMobNotifBadge(n){
+  // Badge trên nút chuông mobile (nav dưới)
   const b=document.getElementById('mobNotifBadge');
-  if(!b) return;
-  if(n>0){b.textContent=n>9?'9+':String(n);b.classList.add('show');}
-  else b.classList.remove('show');
+  if(b){
+    if(n>0){b.textContent=n>9?'9+':String(n);b.classList.add('show');}
+    else b.classList.remove('show');
+  }
+  // Badge trên nút chuông desktop (thanh nav trên) — cùng nguồn dữ liệu duy nhất
+  const bd=document.getElementById('desktopNotifBadge');
+  if(bd){
+    if(n>0){bd.textContent=n>9?'9+':String(n);bd.classList.add('show');}
+    else bd.classList.remove('show');
+  }
 }
 
 // Gửi FCM push đến tất cả thiết bị đã đăng ký token
