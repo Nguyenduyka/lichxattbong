@@ -440,19 +440,38 @@ function openNotifPanel(){
   if(typeof _syncAllBadges==='function') _syncAllBadges();
   _renderNotifPanel();
   if(typeof _syncAllBadges==='function') _syncAllBadges();
-  // Định vị panel NGAY DƯỚI nút chuông (desktop) thay vì toạ độ cố định đoán
-  // trước — panel sẽ luôn "xổ xuống" đúng ngay chuông dù chuông ở vị trí nào.
+
   const panel=document.getElementById('notifPanel');
+  const overlay=document.getElementById('npOverlay');
   const bell=document.getElementById('hdrNotifBell');
-  if(bell && panel && window.innerWidth>600){
-    const r=bell.getBoundingClientRect();
-    panel.style.top=(r.bottom+8)+'px';
-    panel.style.left='auto';
-    panel.style.right=Math.max(12,window.innerWidth-r.right)+'px';
-    bell.classList.add('open');
+  const isDesktop=window.innerWidth>600 && bell && bell.offsetParent!==null; // offsetParent null nếu bell đang display:none (đã ẩn ở màn hình hẹp/ngang)
+
+  if(isDesktop){
+    // FIX: trước đây tính "right = khoảng cách từ mép phải màn hình đến mép
+    // phải chuông" — sai lệch nặng khi chuông nằm trong nhóm nhiều phần tử
+    // (thời tiết, badge...) chiếm gần hết bề ngang header (VD màn hình ngang
+    // hẹp), khiến panel bị đẩy lệch hẳn ra giữa/trái màn hình thay vì nằm
+    // ngay dưới chuông. Giờ đo kích thước THẬT của panel rồi định vị theo
+    // toạ độ trái (left), có giới hạn (clamp) để không bao giờ tràn ra
+    // ngoài màn hình dù chuông ở đâu.
+    panel.style.visibility='hidden';
+    panel.style.right='auto';
+    panel.classList.add('open');
+    requestAnimationFrame(function(){
+      const r=bell.getBoundingClientRect();
+      const pw=panel.offsetWidth||380;
+      const margin=10;
+      let left=r.right-pw; // mặc định: căn mép phải panel trùng mép phải chuông
+      left=Math.max(margin, Math.min(left, window.innerWidth-pw-margin));
+      panel.style.top=(r.bottom+8)+'px';
+      panel.style.left=left+'px';
+      panel.style.visibility='visible';
+      bell.classList.add('open');
+    });
+  } else {
+    panel.classList.add('open');
   }
-  panel.classList.add('open');
-  document.getElementById('npOverlay').classList.add('open');
+  overlay.classList.add('open');
 }
 
 function closeNotifPanel(){
