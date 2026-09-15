@@ -43,7 +43,6 @@ tr[data-date].hl .td-day{animation:trHlDay 5s ease forwards}
 @media(min-width:601px){
   #notifPanel{top:78px;bottom:auto;left:auto;right:24px;width:380px;max-width:calc(100vw - 48px);height:auto;max-height:min(560px,calc(100vh - 110px));border-radius:14px;box-shadow:0 10px 36px rgba(0,0,0,.22);animation:npDropDesktop .18s ease}
   #notifPanel .np-handle{display:none}
-  #notifPanel::before{content:'';position:absolute;top:-7px;right:22px;width:14px;height:14px;background:#fff;transform:rotate(45deg);box-shadow:-3px -3px 6px rgba(0,0,0,.03)}
   .np-overlay{background:rgba(0,0,0,.15)}
 }
 @keyframes npDropDesktop{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
