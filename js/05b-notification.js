@@ -331,7 +331,14 @@ async function _scrollToDate(dateStr, evId){
 
   // Nếu khác tuần → chuyển tuần và chờ render xong
   if(diffWk!==wkOff){
-    _npScrollDate=null; _npScrollEvId=null;
+    // QUAN TRỌNG: phải GÁN (không phải xoá) 2 biến này trước khi render lại.
+    // renderMobileCards() kiểm tra "if(!_npScrollDate)" để quyết định có tự
+    // động cuộn về card "hôm nay" hay không sau khi vẽ lại tuần mới. Trước
+    // đây code lại xoá về null ngay tại đây, khiến điều kiện luôn đúng →
+    // MỌI lần đổi tuần từ thông báo đều bị tự cuộn giật về "hôm nay" trước,
+    // xung đột với việc cuộn đến đúng lịch của thông báo ngay sau đó (nhất
+    // là trên mobile khi đang không ở tuần hiện tại).
+    _npScrollDate=dateStr; _npScrollEvId=evId;
     wkOff=diffWk;
     // FIX: renderAllNoFetch() không tự fetch thời tiết — nếu wxData chưa có
     // (hoặc tuần đích ngoài phạm vi cache), bảng thời tiết sẽ hiện "Không có
@@ -383,6 +390,9 @@ async function _scrollToDate(dateStr, evId){
       card.style.boxShadow='0 0 0 5px rgba(192,57,43,.2)';
       setTimeout(function(){card.style.outline='';card.style.boxShadow='';},5000);
     }
+    // Đã cuộn xong theo thông báo → xoá cờ để các lần đổi tuần thông thường
+    // (bấm Trước/Tiếp) sau đó vẫn tự cuộn về "hôm nay" như bình thường.
+    _npScrollDate=null; _npScrollEvId=null;
   } else {
     // Desktop: scroll trong vs-tbl-inner
     var tblInner=document.getElementById('vsTblInner');
