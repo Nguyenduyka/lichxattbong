@@ -1,0 +1,51 @@
+name: Deploy to GitHub Pages
+
+# Tự động chạy mỗi khi có commit mới trên nhánh main — không cần thao tác gì
+# thêm. Nếu repo của bạn dùng nhánh khác (vd "master"), đổi tên bên dưới.
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:   # cho phép bấm "Run workflow" chạy tay khi cần
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Nếu đang deploy dở mà có commit mới thì huỷ bản đang deploy, chỉ giữ bản mới nhất
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lấy mã nguồn
+        uses: actions/checkout@v4
+
+      - name: Tự động gán số phiên bản (cache-busting) theo commit
+        # Thay __BUILD_ID__ trong index.html bằng mã ngắn của commit + số lần
+        # chạy. Mỗi lần push là một chuỗi khác nhau → trình duyệt của MỌI
+        # người dùng sẽ tự tải lại JS/CSS mới, không cần họ tự xoá cache.
+        run: |
+          BUILD_ID="${GITHUB_SHA::8}-${GITHUB_RUN_NUMBER}"
+          echo "BUILD_ID=$BUILD_ID"
+          sed -i "s/__BUILD_ID__/$BUILD_ID/g" index.html
+          grep -c "$BUILD_ID" index.html
+
+      - name: Chuẩn bị gói xuất bản (giữ nguyên CNAME cho tên miền riêng)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Xuất bản lên GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
