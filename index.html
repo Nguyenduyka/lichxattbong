@@ -10,8 +10,8 @@
 <!-- Viewer UID: thay khi deploy cho cơ quan khác (hoặc dùng ?uid=... khi test) -->
 <meta name="viewer-uid" content="jSgnpibQwNNZFMB8T5ATA5Eb2fy2">
 <!-- Utils chung: esc(), log(), getViewerUid(), CAT — phải load TRƯỚC mọi file khác -->
-<script src="js/00-utils.js"></script>
-<script src="js/00-bootstrap.js"></script>
+<script src="js/00-utils.js?v=__BUILD_ID__"></script>
+<script src="js/00-bootstrap.js?v=__BUILD_ID__"></script>
 
 <link rel="manifest" id="pwaManifest">
 <meta name="theme-color" content="#c0392b">
@@ -39,18 +39,18 @@
   .hdr-main{display:flex;align-items:center;gap:12px;padding:8px 16px}
   body{font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;margin:0}
 </style>
-<link rel="stylesheet" href="styles/main.css">
+<link rel="stylesheet" href="styles/main.css?v=__BUILD_ID__">
 <!-- Hiệu ứng viền nét đứt chạy: nút Thêm lịch (admin desktop) + dòng lịch highlight (viewer mobile) -->
-<link rel="stylesheet" href="styles/hover-effects.css">
+<link rel="stylesheet" href="styles/hover-effects.css?v=__BUILD_ID__">
 <!-- Muốn bật giao diện glass desktop: bỏ comment dòng dưới -->
-<!-- <link rel="stylesheet" href="styles/desktop-glass.css"> -->
+<!-- <link rel="stylesheet" href="styles/desktop-glass.css?v=__BUILD_ID__"> -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
-<script src="js/01-onesignal-init.js"></script>
+<script src="js/01-onesignal-init.js?v=__BUILD_ID__"></script>
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 </head>
 <body>
@@ -155,7 +155,7 @@
   
   <button id="desktopLoginBtn" onclick="openLogin()" title="Đăng nhập quản trị (Ctrl+Shift+A)" style="position:fixed;bottom:20px;right:20px;width:44px;height:44px;border-radius:50%;background:rgba(140,24,18,.88);border:2px solid rgba(255,255,255,.2);color:#fff;font-size:18px;cursor:pointer;z-index:50;box-shadow:0 3px 14px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;transition:opacity .2s,transform .2s;opacity:.75" onmouseover="this.style.opacity=1;this.style.transform='scale(1.1)'" onmouseout="this.style.opacity=.75;this.style.transform=''">🔐</button>
   <div id="loginBtnTip" style="position:fixed;bottom:70px;right:10px;background:rgba(0,0,0,.75);color:#fff;font-size:10px;font-weight:700;padding:4px 10px;border-radius:10px;white-space:nowrap;z-index:50;pointer-events:none;opacity:0;transition:opacity .2s">Đăng nhập quản trị</div>
-  <script src="js/02-login-tooltip.js"></script>
+  <script src="js/02-login-tooltip.js?v=__BUILD_ID__"></script>
 </div>
 
 <div id="adminScreen">
@@ -326,7 +326,7 @@
 </div>
 
 <button id="tvFullscreenBtn" onclick="toggleFullscreen()">⛶ Toàn màn hình</button>
-<script src="js/03-fullscreen-btn.js"></script>
+<script src="js/03-fullscreen-btn.js?v=__BUILD_ID__"></script>
 
 <div class="overlay" id="ovPrint">
   <div class="modal sm">
@@ -691,18 +691,18 @@
     </div>
   </div>
 </div>
-<script src="js/04-lightbox.js"></script>
+<script src="js/04-lightbox.js?v=__BUILD_ID__"></script>
 
-<script src="js/05a-config-firebase.js"></script>
-<script src="js/05b-notification.js"></script>
-<script src="js/lunar.js"></script>
-<script src="js/05c-state-utils.js"></script>
-<script src="js/05d-render-tables.js"></script>
-<script src="js/05e-admin-features.js"></script>
-<script src="js/05f-nav-download.js"></script>
-<script src="js/05g-extras.js"></script>
-<script src="js/05h-boot.js"></script>
-<script src="js/06-pwa-install.js"></script>
+<script src="js/05a-config-firebase.js?v=__BUILD_ID__"></script>
+<script src="js/05b-notification.js?v=__BUILD_ID__"></script>
+<script src="js/lunar.js?v=__BUILD_ID__"></script>
+<script src="js/05c-state-utils.js?v=__BUILD_ID__"></script>
+<script src="js/05d-render-tables.js?v=__BUILD_ID__"></script>
+<script src="js/05e-admin-features.js?v=__BUILD_ID__"></script>
+<script src="js/05f-nav-download.js?v=__BUILD_ID__"></script>
+<script src="js/05g-extras.js?v=__BUILD_ID__"></script>
+<script src="js/05h-boot.js?v=__BUILD_ID__"></script>
+<script src="js/06-pwa-install.js?v=__BUILD_ID__"></script>
 
 <!-- Modal cài đặt Gemini API Key -->
 <div class="overlay" id="ovApiKey">
@@ -779,7 +779,7 @@
   </div>
 </div>
 
-<script src="js/07-ai-notify.js"></script>
+<script src="js/07-ai-notify.js?v=__BUILD_ID__"></script>
 <!-- Confirm Modal -->
 <div id="confirmModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;padding:20px">
   <div style="background:#fff;border-radius:16px;padding:28px 24px 20px;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:cfmIn .2s ease">
