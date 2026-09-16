@@ -180,6 +180,10 @@ function triggerNotif(count){
 // 7b. Đồng bộ TẤT CẢ badge từ một nguồn duy nhất: _npMsgLog.length
 function _syncAllBadges(){
   const n=_npMsgLog.length;
+  // Dọn badge nổi kiểu cũ (#notifBadge, position:fixed góc phải màn hình) nếu
+  // còn sót lại do trình duyệt/Service Worker cache bản JS cũ — đây là chấm đỏ
+  // bị hiểu nhầm là badge của chuông nhưng lại nằm ở góc ô thời tiết.
+  try{const _old=document.getElementById('notifBadge'); if(_old&&_old.parentNode) _old.parentNode.removeChild(_old);}catch(e){}
   // Badge nav chuông + số trong panel header
   if(typeof _updateMobNotifBadge==='function') _updateMobNotifBadge(n);
   // App icon badge = n (iOS home screen, PWA)
@@ -447,13 +451,10 @@ function openNotifPanel(){
   const isDesktop=window.innerWidth>600 && bell && bell.offsetParent!==null; // offsetParent null nếu bell đang display:none (đã ẩn ở màn hình hẹp/ngang)
 
   if(isDesktop){
-    // FIX: trước đây tính "right = khoảng cách từ mép phải màn hình đến mép
-    // phải chuông" — sai lệch nặng khi chuông nằm trong nhóm nhiều phần tử
-    // (thời tiết, badge...) chiếm gần hết bề ngang header (VD màn hình ngang
-    // hẹp), khiến panel bị đẩy lệch hẳn ra giữa/trái màn hình thay vì nằm
-    // ngay dưới chuông. Giờ đo kích thước THẬT của panel rồi định vị theo
-    // toạ độ trái (left), có giới hạn (clamp) để không bao giờ tràn ra
-    // ngoài màn hình dù chuông ở đâu.
+    // Panel xổ xuống ngay dưới chuông. Ưu tiên canh MÉP TRÁI panel trùng mép
+    // trái chuông (chuông nằm bên trái ô thời tiết nên mở về phía phải là
+    // thuận mắt nhất), sau đó kẹp lại để panel không tràn khỏi màn hình.
+    // Mũi tên được đặt đúng tâm chuông qua biến CSS --np-caret.
     panel.style.visibility='hidden';
     panel.style.right='auto';
     panel.classList.add('open');
@@ -461,10 +462,13 @@ function openNotifPanel(){
       const r=bell.getBoundingClientRect();
       const pw=panel.offsetWidth||380;
       const margin=10;
-      let left=r.right-pw; // mặc định: căn mép phải panel trùng mép phải chuông
+      let left=r.left;                       // canh mép trái panel với mép trái chuông
       left=Math.max(margin, Math.min(left, window.innerWidth-pw-margin));
-      panel.style.top=(r.bottom+8)+'px';
+      panel.style.top=(r.bottom+10)+'px';
       panel.style.left=left+'px';
+      // Tâm chuông tính theo hệ toạ độ của panel, kẹp trong thân panel
+      const caret=Math.max(16, Math.min(pw-16, (r.left+r.width/2)-left));
+      panel.style.setProperty('--np-caret', caret+'px');
       panel.style.visibility='visible';
       bell.classList.add('open');
     });
@@ -569,7 +573,9 @@ function _npItemClick(el){
 
   // Trên DESKTOP: mở modal xem chi tiết lịch (kèm tải giấy mời nếu có),
   // KHÔNG cuộn đến vị trí tuần nữa — người dùng chỉ cần xem/tải, không cần
-  // rời khỏi tuần đang xem.
+  // rời khỏi tuần đang xem. Modal không phụ thuộc tuần/thời tiết nên luôn
+  // đúng dù thông báo thuộc tuần nào.
+  // Trên MOBILE: giữ nguyên hành vi cũ (cuộn đến đúng vị trí lịch trong tuần).
   const isMobile=window.innerWidth<=600;
   if(!isMobile){
     closeNotifPanel();
