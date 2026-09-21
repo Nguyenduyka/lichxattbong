@@ -156,14 +156,6 @@ function trackVisit(){
       log('[Boot] events after Firebase wait='+events.length);
     }
 
-    // Deep-link từ push mở bằng URL (?d=YYYY-MM-DD&ev=<id>) → nhảy đến sự kiện
-    try{
-      var _dl_d = _params.get('d') || _params.get('date');
-      var _dl_ev = _params.get('ev') || _params.get('evId');
-      if(_dl_d){ window._pendingDeepLink = { date: _dl_d, evId: _dl_ev }; }
-      if(typeof _processDeepLink==='function') _processDeepLink();
-    }catch(_){}
-
     // Bước 3: Chờ weather xong (tối đa 8s, đã chạy song song nên thường đã có)
     setLoadProgress(80);
     log('[Boot] waiting for weather...');
@@ -183,6 +175,25 @@ function trackVisit(){
     } else {
       renderAllNoFetch();
     }
+
+    // Deep-link từ push mở bằng URL (?d=YYYY-MM-DD&ev=<id>) → nhảy đến sự kiện.
+    // QUAN TRỌNG: phải xử lý SAU khi renderAllNoFetch() ở trên đã chạy xong
+    // (màn hình đã có dữ liệu thật), KHÔNG xử lý trước đó như cũ. Trước đây
+    // code này nằm ngay sau Bước 2 — lúc đó #vsCards/#vsTblInner mới chỉ là
+    // khung skeleton rỗng (chưa có card/dòng lịch nào), nên: (1) nếu thông
+    // báo trỏ đến CÙNG tuần hiện tại → không tìm thấy gì để cuộn tới (im
+    // lặng); (2) nếu trỏ đến TUẦN KHÁC → có cuộn được nhưng bị lần render
+    // chính thức ngay sau đó (renderAllNoFetch() ở trên) dựng lại toàn bộ
+    // DOM, xoá mất vị trí cuộn/nhấp nháy vừa thiết lập. Đây chính là lý do
+    // bấm vào thông báo đẩy (khi mở app từ màn hình khoá) không nhảy đến
+    // đúng vị trí lịch.
+    try{
+      var _dl_d = _params.get('d') || _params.get('date');
+      var _dl_ev = _params.get('ev') || _params.get('evId');
+      if(_dl_d){ window._pendingDeepLink = { date: _dl_d, evId: _dl_ev }; }
+      if(typeof _processDeepLink==='function') _processDeepLink();
+    }catch(_){}
+
     trackVisit();
     log('[Boot] done, events='+events.length);
   }catch(err){
@@ -190,5 +201,12 @@ function trackVisit(){
     _isInitialLoad=false;
     if(events.length>0) removeLoadingSpinner();
     renderAllNoFetch();
+    // Vẫn thử xử lý deep-link dù luồng chính lỗi giữa chừng, miễn là đã render
+    try{
+      var _dl_d2 = _params.get('d') || _params.get('date');
+      var _dl_ev2 = _params.get('ev') || _params.get('evId');
+      if(_dl_d2){ window._pendingDeepLink = { date: _dl_d2, evId: _dl_ev2 }; }
+      if(typeof _processDeepLink==='function') _processDeepLink();
+    }catch(_){}
   }
 })();
