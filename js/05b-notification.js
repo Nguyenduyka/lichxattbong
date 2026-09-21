@@ -361,7 +361,13 @@ async function _scrollToDate(dateStr, evId){
     if(!cards) return;
     // Tìm đúng card theo data-date (không dùng text search)
     var card=cards.querySelector('[data-date="'+dateStr+'"]');
-    if(!card) return;
+    if(!card){
+      // Phòng trường hợp DOM chưa kịp dựng xong sau khi đổi tuần (thiết bị
+      // yếu/chậm) → thử lại thêm 1 lần sau 200ms thay vì bỏ cuộc ngay lập tức.
+      await new Promise(r=>setTimeout(r,200));
+      card=cards.querySelector('[data-date="'+dateStr+'"]');
+      if(!card) return;
+    }
 
     if(evId){
       // Có evId → scroll thẳng đến đúng dòng lịch, không scroll card trước
@@ -594,7 +600,8 @@ function _npItemClick(el){
   }
 
   // Nếu date null — thử tìm từ events theo ts hoặc title
-  if(!date){
+  let mDate=date, mEvId=evId?parseInt(evId):null;
+  if(!mDate){
     let matched=events.find(e=>e.isNew&&Math.abs(e.isNew-ts)<30000);
     if(!matched){
       const msg=npItem.msg||'';
@@ -607,18 +614,32 @@ function _npItemClick(el){
         });
       }
     }
-    if(matched){
-      el.setAttribute('data-date',matched.date);
-      el.setAttribute('data-evid',matched.id);
-      _scrollToDate(matched.date, matched.id);
-    } else {
-      closeNotifPanel();
-    }
+    if(matched){ mDate=matched.date; mEvId=matched.id; }
+  }
+
+  if(!mDate){
+    // Không xác định được lịch nào cả (kể cả suy luận cũng không ra) → coi
+    // như đã bị xoá, hiện form thông báo thay vì im lặng đóng panel.
+    closeNotifPanel();
+    _openNpDetail(null, null, npItem);
+    return;
+  }
+
+  // Lịch này còn tồn tại hay đã bị xoá? Chỉ khi có evId cụ thể mới xác định
+  // chắc chắn được (không có evId — thông báo dạng cũ — thì không đủ căn cứ
+  // để kết luận là đã xoá, cứ cuộn đến ngày như trước).
+  const stillExists = mEvId==null || events.some(e=>e.id==mEvId);
+  if(!stillExists){
+    // Lịch đã bị xoá → hiện form "đã bị xoá" gọn gàng (dùng chung modal với
+    // desktop) thay vì cuộn đến một vị trí giờ đã trống rỗng, không có gì
+    // để xem, khiến người dùng không hiểu chuyện gì đã xảy ra.
+    closeNotifPanel();
+    _openNpDetail(mDate, mEvId, npItem);
     return;
   }
 
   // Navigate đến đúng ngày/lịch (mobile)
-  _scrollToDate(date, evId?parseInt(evId):null);
+  _scrollToDate(mDate, mEvId);
 }
 
 // ── Modal xem chi tiết lịch từ thông báo (desktop) ──────────────
