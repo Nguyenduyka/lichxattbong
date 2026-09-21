@@ -245,7 +245,13 @@ function resetLapLai(){
 function dlHTML(){
   const c=document.documentElement.outerHTML;const b=new Blob([c],{type:'text/html;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(b);
-  a.download=`LichLamViec_TayTraBong_Tuan${wkNum(wkStart(wkOff))}_${wkStart(wkOff).getFullYear()}.html`;
+  // Tên file lấy động theo đơn vị đang cấu hình (trước đây cố định "TayTraBong"
+  // do copy nguyên bản từ dự án mẫu, không đúng cho các xã khác).
+  const _dv=(typeof _orgInfo==='function'?_orgInfo():null);
+  const _slug=(_dv&&(_dv.diaDanh||_dv.donVi)||'LichLamViec')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/đ/gi,'d').replace(/[^a-zA-Z0-9]+/g,'');
+  a.download=`LichLamViec_${_slug}_Tuan${wkNum(wkStart(wkOff))}_${wkStart(wkOff).getFullYear()}.html`;
   a.click();URL.revokeObjectURL(a.href);
 }
 
