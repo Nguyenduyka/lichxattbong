@@ -294,22 +294,20 @@ tr[data-date].hl .td-day{animation:trHlDay 5s ease forwards}
    (#mobNotifBtn ở thanh nav dưới).
    ════════════════════════════════════════════════════════════════ */
 @keyframes bellRing{
-  0%,28%,100%{transform:rotate(0deg)}
-  4%{transform:rotate(-15deg)}
-  8%{transform:rotate(12deg)}
-  12%{transform:rotate(-9deg)}
-  16%{transform:rotate(7deg)}
-  20%{transform:rotate(-4deg)}
-  24%{transform:rotate(2deg)}
+  0%,100%{transform:rotate(0deg)}
+  10%{transform:rotate(-14deg)}
+  20%{transform:rotate(11deg)}
+  30%{transform:rotate(-8deg)}
+  40%{transform:rotate(6deg)}
+  50%{transform:rotate(-3deg)}
+  60%{transform:rotate(2deg)}
+  70%,100%{transform:rotate(0deg)}
 }
-@keyframes bellGlowPulse{
-  0%,100%{box-shadow:0 0 0 0 rgba(192,57,43,.55)}
-  50%{box-shadow:0 0 0 8px rgba(192,57,43,0)}
-}
-.hdr-bell.notif-alert{animation:bellGlowPulse 1.8s ease-out infinite}
-.hdr-bell.notif-alert .hdr-bell-ico{display:inline-block;transform-origin:50% 0%;animation:bellRing 1.8s ease-in-out infinite}
-#mobNotifBtn.notif-alert{animation:bellGlowPulse 1.8s ease-out infinite;border-radius:50%}
-#mobNotifBtn.notif-alert .mn-ico{display:inline-block;transform-origin:50% 0%;animation:bellRing 1.8s ease-in-out infinite}
+/* !important để đảm bảo không bị bất kỳ quy tắc nào khác (hover, .open...)
+   ghi đè transform của icon; display:inline-block!important vì transform
+   không có tác dụng trên phần tử display:inline mặc định của <span>. */
+.hdr-bell.notif-alert .hdr-bell-ico{display:inline-block!important;transform-origin:50% 50%!important;animation:bellRing 1.4s ease-in-out infinite!important}
+#mobNotifBtn.notif-alert .mn-ico{display:inline-block!important;transform-origin:50% 50%!important;animation:bellRing 1.4s ease-in-out infinite!important}
 /* Tôn trọng cài đặt "giảm hiệu ứng chuyển động" của người dùng (accessibility) */
 @media(prefers-reduced-motion:reduce){
   .hdr-bell.notif-alert,#mobNotifBtn.notif-alert,
