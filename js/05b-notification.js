@@ -216,16 +216,12 @@ let _npScrollDate = null; // ngày cần scroll đến từ thông báo
 let _npScrollEvId = null; // id lịch cần highlight
 
 // ── Trạng thái hiệu ứng "rung + nhấp nháy" của chuông ──────────────────
-// _isNotifPanelOpen: panel danh sách thông báo có đang mở hay không — mở
-//   panel là dấu hiệu người dùng "đã để ý" nên phải DỪNG hiệu ứng ngay,
-//   dù số lượng chưa đọc (badge) vẫn giữ nguyên cho đến khi thật sự đọc/
-//   đánh dấu đã đọc.
-// _bellSeenCount: mốc số lượng chưa đọc tại lần gần nhất người dùng đã mở
-//   panel để xem — dùng để chỉ BẬT LẠI hiệu ứng khi có thông báo MỚI PHÁT
-//   SINH THÊM (n tăng vượt mốc này), không tự bật lại chỉ vì đóng rồi mở
-//   panel qua loa mà không có gì mới.
-let _isNotifPanelOpen = false;
-let _bellSeenCount = 0;
+// Quy tắc: hiệu ứng chạy CHỪNG NÀO còn thông báo chưa đọc (n>0), kể cả khi
+// panel danh sách đang mở — mở panel KHÔNG làm dừng hiệu ứng, vì người dùng
+// có thể chỉ đang lướt xem chứ chưa thật sự "đọc" hết. Hiệu ứng chỉ dừng khi
+// n về 0, tức là: đã bấm xem/xoá hết từng thông báo, hoặc bấm "Đánh dấu đã
+// đọc tất cả". Badge số lượng luôn phản ánh đúng n hiện tại một cách độc lập
+// với hiệu ứng (đã xử lý ở _updateMobNotifBadge, gọi cùng lúc bên dưới).
 
 // Bật/tắt hiệu ứng rung+nhấp nháy trên chuông (cả desktop lẫn mobile)
 function _setBellAlert(active){
@@ -234,29 +230,10 @@ function _setBellAlert(active){
   [b1,b2].forEach(function(b){ if(b) b.classList.toggle('notif-alert', !!active); });
 }
 
-// Quyết định bật/tắt hiệu ứng dựa trên số lượng chưa đọc hiện tại (n) và
-// trạng thái panel — gọi mỗi khi badge được đồng bộ (_syncAllBadges).
+// Quyết định bật/tắt hiệu ứng dựa thuần trên số lượng chưa đọc hiện tại (n) —
+// gọi mỗi khi badge được đồng bộ (_syncAllBadges), kể cả khi panel đang mở.
 function _updateBellAlertState(n){
-  if(_isNotifPanelOpen){
-    // Đang mở panel → luôn tắt hiệu ứng, đồng thời chốt mốc "đã xem" tại n
-    // hiện tại để không tự bật lại khi đóng panel nếu không có gì mới thêm.
-    _setBellAlert(false);
-    _bellSeenCount = n;
-    return;
-  }
-  if(n<=0){
-    _setBellAlert(false);
-    _bellSeenCount = 0;
-    return;
-  }
-  if(n>_bellSeenCount){
-    // Có thông báo MỚI phát sinh (n tăng so với mốc đã xem) → bật hiệu ứng,
-    // kể cả khi hệ thống vừa tải trang lần đầu và đã có sẵn thông báo chưa
-    // xem từ trước (_bellSeenCount khởi tạo = 0 nên n>0 sẽ bật ngay).
-    _setBellAlert(true);
-  }
-  // n>0 nhưng không tăng thêm so với mốc đã xem → giữ nguyên trạng thái
-  // hiện tại (không tự bật lại nếu người dùng đã dừng nó trước đó).
+  _setBellAlert(n>0);
 }
 (function(){
   try{_npMsgLog=JSON.parse(localStorage.getItem('llv_np_log')||'[]');}catch(e){_npMsgLog=[];}
@@ -478,10 +455,12 @@ async function _scrollToDate(dateStr, evId){
 }
 
 function openNotifPanel(){
-  // Mở panel = người dùng đã để ý → dừng hiệu ứng rung/nhấp nháy NGAY LẬP
-  // TỨC (badge số lượng vẫn giữ nguyên, chỉ hiệu ứng thu hút chú ý dừng lại).
-  _isNotifPanelOpen = true;
-  _setBellAlert(false);
+  // LƯU Ý: KHÔNG tắt hiệu ứng rung/nhấp nháy khi mở panel nữa — theo yêu cầu
+  // mới, hiệu ứng phải tiếp tục chạy chừng nào còn thông báo chưa đọc (n>0),
+  // kể cả khi người dùng đang xem danh sách, vì mở panel không đồng nghĩa
+  // với đã đọc từng thông báo. Hiệu ứng tự dừng khi n về 0 (đọc/xoá hết
+  // từng thông báo, hoặc bấm "Đánh dấu đã đọc tất cả") — xử lý tự động
+  // trong _updateBellAlertState() mỗi khi _syncAllBadges() chạy.
   // Chặn scroll lan ra ngoài — gắn một lần
   const npList = document.getElementById('npList');
   if(npList && !npList._scrollLocked){
@@ -550,11 +529,9 @@ function closeNotifPanel(){
   document.getElementById('npOverlay').classList.remove('open');
   const bell=document.getElementById('hdrNotifBell');
   if(bell) bell.classList.remove('open');
-  // Đóng panel: người dùng đã "xem qua" danh sách tại thời điểm này. Mốc
-  // _bellSeenCount đã được chốt sẵn trong _updateBellAlertState() lúc mở
-  // panel, nên chỉ cần tắt cờ — nếu không có thông báo mới nào phát sinh
-  // thêm trong lúc xem, hiệu ứng sẽ KHÔNG tự bật lại sau khi đóng.
-  _isNotifPanelOpen = false;
+  // Không cần xử lý gì thêm cho hiệu ứng chuông ở đây — nó luôn phản ánh
+  // đúng số lượng chưa đọc hiện tại (_updateBellAlertState), không phụ
+  // thuộc việc panel đang mở hay đóng.
 }
 
 function clearNotifPanel(){
