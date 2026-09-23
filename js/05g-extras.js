@@ -433,3 +433,43 @@ function restoreData(){
   };
   inp.click();
 }
+
+// ════════════════════════════════════════
+// THÔNG TIN TÁC GIẢ — hiện khi chuột phải (right-click) trên desktop
+// ════════════════════════════════════════
+function openAuthorInfo(){
+  const info = (typeof AUTHOR_INFO!=='undefined' && AUTHOR_INFO) ? AUTHOR_INFO : {
+    hoTen:'', soDienThoai:'', noiCongTac:''
+  };
+  const elHoTen=document.getElementById('aiHoTen');
+  const elSdt=document.getElementById('aiSdt');
+  const elNoi=document.getElementById('aiNoiCongTac');
+  if(elHoTen) elHoTen.textContent = info.hoTen || 'Chưa cập nhật';
+  if(elSdt){
+    elSdt.textContent = info.soDienThoai || 'Chưa cập nhật';
+    elSdt.href = info.soDienThoai ? ('tel:'+info.soDienThoai.replace(/[^0-9+]/g,'')) : '#';
+  }
+  if(elNoi) elNoi.textContent = info.noiCongTac || 'Chưa cập nhật';
+  const elDiaChi=document.getElementById('aiDiaChi');
+  if(elDiaChi) elDiaChi.textContent = info.diaChi || 'Chưa cập nhật';
+  const ov=document.getElementById('ovAuthorInfo');
+  if(ov) ov.classList.add('open');
+}
+function closeAuthorInfo(){
+  const ov=document.getElementById('ovAuthorInfo');
+  if(ov) ov.classList.remove('open');
+}
+
+// Chỉ thay chuột phải mặc định bằng form thông tin tác giả TRÊN DESKTOP —
+// dùng "any-pointer:fine" để nhận diện có chuột thật (không phải cảm ứng),
+// tránh chặn nhầm menu chạm-giữ (long-press) hữu ích trên điện thoại/tablet.
+(function(){
+  function _isDesktopPointer(){
+    try{ return window.matchMedia('(any-pointer:fine)').matches; }catch(e){ return window.innerWidth>900; }
+  }
+  document.addEventListener('contextmenu', function(e){
+    if(!_isDesktopPointer()) return; // để nguyên menu mặc định trên di động
+    e.preventDefault();
+    openAuthorInfo();
+  });
+})();

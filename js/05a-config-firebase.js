@@ -29,6 +29,17 @@ const ORG_CONFIG = {
   loai:           'ubnd',                         // 'ubnd' hoặc 'dang_uy'
 };
 
+// ── Thông tin tác giả hệ thống — hiện khi bấm chuột phải (right-click) trên
+//    desktop. Đây là thông tin về người xây dựng/vận hành phần mềm, KHÔNG
+//    phải người phụ trách của đơn vị (ORG_CONFIG ở trên). Chỉnh sửa 3 dòng
+//    dưới đây cho đúng thông tin thật của bạn.
+const AUTHOR_INFO = {
+  hoTen:          'Nguyễn Duy Ka',                                    // Tên tác giả
+  noiCongTac:     'Chuyên viên Phòng Văn hóa - Xã hội xã Trà Bồng',   // Nơi công tác
+  soDienThoai:    '0917.921.999',                                     // SĐT liên hệ
+  diaChi:         'Xã Trà Bồng, tỉnh Quảng Ngãi',                     // Địa chỉ
+};
+
 // ── Mẫu config cho Đảng ủy (copy vào ORG_CONFIG khi dùng cho Đảng ủy) ──
 // const ORG_CONFIG = {
 //   tenCoQuan:     'Đảng ủy Xã Tây Trà Bồng',
@@ -154,15 +165,17 @@ function _initOneSignal() {
         log('[OS] foregroundWillDisplay:', e.notification.title);
       });
 
-      // Click notification → xóa badge + nhảy đến đúng sự kiện (nếu push mang date/evId)
+      // Click notification → xóa badge + xử lý ĐÚNG thông báo vừa bấm (không
+      // đụng đến các thông báo khác còn lại trên thiết bị).
       OneSignal.Notifications.addEventListener('click', function(event) {
         clearNotif();
         try {
           var data = (event && event.notification && event.notification.additionalData) || {};
           var d = data.evDate || data.date || null;
           var ev = data.evId || data.ev || null;
+          var msg = data.msg || '';
           if (d) {
-            _pendingDeepLink = { date: d, evId: ev };
+            _pendingDeepLink = { date: d, evId: ev, msg: msg };
             if (typeof _processDeepLink === 'function') _processDeepLink(); // điều hướng nếu dữ liệu đã sẵn sàng
           }
         } catch(_) {}
