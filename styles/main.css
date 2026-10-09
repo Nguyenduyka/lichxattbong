@@ -313,3 +313,13 @@ tr[data-date].hl .td-day{animation:trHlDay 5s ease forwards}
   .hdr-bell.notif-alert,#mobNotifBtn.notif-alert,
   .hdr-bell.notif-alert .hdr-bell-ico,#mobNotifBtn.notif-alert .mn-ico{animation:none}
 }
+/* ════════════════════════════════════════════════════════════════
+   DÒNG CHỮ NHỎ "HỆ THỐNG QUẢN LÝ LỊCH LÀM VIỆC SỐ" TRÊN HEADER
+   Trước đây bị mờ vì: cỡ chữ chỉ 7px trên điện thoại + bị làm mờ 2 lần
+   (opacity:.85 nhân với màu trắng alpha .85 ≈ 72%) + nền đỏ gradient.
+   Giờ: chữ trắng đặc, đậm hơn, to hơn 1px, có bóng chữ nhẹ để nổi trên nền.
+   ════════════════════════════════════════════════════════════════ */
+.pg-hdr .hdr-txt .sup{opacity:1;color:#fff;font-weight:800;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+@media(max-width:600px){
+  .pg-hdr .hdr-txt .sup{font-size:8px;letter-spacing:1.2px}
+}
