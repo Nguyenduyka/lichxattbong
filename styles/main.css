@@ -330,3 +330,18 @@ tr[data-date].hl .td-day{animation:trHlDay 5s ease forwards}
    trắng nhạt. Cho nền gốc (html) ở phía trên cùng màu đỏ của header để thanh
    trạng thái luôn liền một khối đỏ, đúng như mẫu. */
 html{background:linear-gradient(180deg,var(--red) 0,var(--red) 35%,var(--bg) 35%)}
+
+/* Dải đỏ cố định phủ đúng vùng thanh trạng thái iPhone (khu vực tai thỏ/đảo
+   động). Từ iOS 26, hệ điều hành tự làm mờ/ám sáng mép trên của trang và đổi
+   chữ giờ/pin sang màu đen nếu mép trên đó không có phần tử đặc màu — nên đầu
+   trang bị ám hồng nhạt dù header bên dưới là màu đỏ. Đặt một dải đỏ đặc,
+   position:fixed ở sát mép trên để iOS nhận ra mép trên là màu đỏ (chữ giờ/pin
+   trắng, không ám sáng). Trên máy không có tai thỏ, env() = 0 nên dải cao 0px
+   và không ảnh hưởng gì. */
+body::before{
+  content:'';position:fixed;top:0;left:0;right:0;
+  height:env(safe-area-inset-top,0px);
+  background:linear-gradient(135deg,var(--red2) 0%,var(--red) 55%,#d93025 100%);
+  z-index:900;pointer-events:none;
+}
+@media print{body::before{display:none}}
