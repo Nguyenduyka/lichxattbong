@@ -323,3 +323,10 @@ tr[data-date].hl .td-day{animation:trHlDay 5s ease forwards}
 @media(max-width:600px){
   .pg-hdr .hdr-txt .sup{font-size:8px;letter-spacing:1.2px}
 }
+
+/* Vùng thanh trạng thái iPhone (giờ/pin) dùng kiểu "black-translucent" nên
+   nó hiện màu NỀN CỦA TRANG phía sau header. Khi kéo trang xuống (overscroll)
+   hoặc lúc header chưa phủ kín, phần đó lộ nền sáng → đầu trang bị ám hồng/
+   trắng nhạt. Cho nền gốc (html) ở phía trên cùng màu đỏ của header để thanh
+   trạng thái luôn liền một khối đỏ, đúng như mẫu. */
+html{background:linear-gradient(180deg,var(--red) 0,var(--red) 35%,var(--bg) 35%)}
