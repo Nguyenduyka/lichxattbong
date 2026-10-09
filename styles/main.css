@@ -345,3 +345,10 @@ body::before{
   z-index:900;pointer-events:none;
 }
 @media print{body::before{display:none}}
+
+/* Safari (không phải PWA) tô màu thanh trạng thái theo MÀU NỀN ĐẦU TRANG
+   (body), không đọc theme-color nữa → hiện dải kem phía trên header. Cho nền
+   body ở 80px đầu tiên màu đỏ (nằm khuất sau header nên không lộ ra ở nội
+   dung), Safari sẽ tô thanh trạng thái màu đỏ liền với header. */
+html body{background:linear-gradient(180deg,var(--red) 0,var(--red) 80px,var(--bg) 80px)}
+@media print{html body{background:#fff}}
