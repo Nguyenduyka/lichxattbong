@@ -9,6 +9,9 @@
 <title>Hệ thống quản lý lịch làm việc số</title>
 <!-- Viewer UID: thay khi deploy cho cơ quan khác (hoặc dùng ?uid=... khi test) -->
 <meta name="viewer-uid" content="jSgnpibQwNNZFMB8T5ATA5Eb2fy2">
+<!-- Mã phiên bản của lần deploy này — GitHub Action tự thay bằng mã commit.
+     Dùng để tự phát hiện khi có bản mới hơn (xem js/00-bootstrap.js). -->
+<script>window.__BUILD_ID__="__BUILD_ID__";</script>
 <!-- Utils chung: esc(), log(), getViewerUid(), CAT — phải load TRƯỚC mọi file khác -->
 <script src="js/00-utils.js?v=__BUILD_ID__"></script>
 <script src="js/00-bootstrap.js?v=__BUILD_ID__"></script>
@@ -116,13 +119,13 @@
   <div id="vsTicker"><div class="vs-tick-in" id="vsTickerInner"></div></div>
 
   
-  <div class="vsfd-credit" id="vsCredit">✍️ <strong>Nguyễn Duy Ka</strong>, Phòng Kinh tế xã Tây Trà Bồng &nbsp;|&nbsp; 📱 <strong>0917.921.999</strong></div>
+  <div class="vsfd-credit" id="vsCredit">✍️ <strong>Nguyễn Duy Ka</strong>, Phòng Văn hóa - Xã hội xã Trà Bồng &nbsp;|&nbsp; 📱 <strong>0917.921.999</strong></div>
 
   
 
 
   
-  <div class="mob-nav"><div class="vs-footer-mob" id="vsCredit2"><div class="vs-footer-mob-track"><div class="vs-credit-inner"><span class="vs-credit-pen">✍️</span><span class="vs-credit-name">Nguyễn Duy Ka</span><span class="vs-credit-pipe"></span><span class="vs-credit-unit">Phòng Kinh tế xã Tây Trà Bồng</span><span class="vs-credit-pipe"></span><span class="vs-credit-phone">📱 0917.921.999</span></div><span class="vs-credit-dot">❖</span><div class="vs-credit-inner"><span class="vs-credit-pen">✍️</span><span class="vs-credit-name">Nguyễn Duy Ka</span><span class="vs-credit-pipe"></span><span class="vs-credit-unit">Phòng Kinh tế xã Tây Trà Bồng</span><span class="vs-credit-pipe"></span><span class="vs-credit-phone">📱 0917.921.999</span></div><span class="vs-credit-dot">❖</span></div></div><div class="mob-nav-in">
+  <div class="mob-nav"><div class="vs-footer-mob" id="vsCredit2"><div class="vs-footer-mob-track"><div class="vs-credit-inner"><span class="vs-credit-pen">✍️</span><span class="vs-credit-name">Nguyễn Duy Ka</span><span class="vs-credit-pipe"></span><span class="vs-credit-unit">Phòng Văn hóa - Xã hội xã Trà Bồng</span><span class="vs-credit-pipe"></span><span class="vs-credit-phone">📱 0917.921.999</span></div><span class="vs-credit-dot">❖</span><div class="vs-credit-inner"><span class="vs-credit-pen">✍️</span><span class="vs-credit-name">Nguyễn Duy Ka</span><span class="vs-credit-pipe"></span><span class="vs-credit-unit">Phòng Văn hóa - Xã hội xã Trà Bồng</span><span class="vs-credit-pipe"></span><span class="vs-credit-phone">📱 0917.921.999</span></div><span class="vs-credit-dot">❖</span></div></div><div class="mob-nav-in">
     <button class="mn-btn" onclick="nav(-1)"><span class="mn-ico">‹</span><span>Trước</span></button>
     <button class="mn-btn act" onclick="goToday()"><span class="mn-ico">📅</span><span>Hôm nay</span></button>
     <button class="mn-btn" onclick="openWkList()"><span class="mn-ico">📋</span><span>Lịch</span></button>
@@ -275,7 +278,7 @@
       <div class="vs-leg" id="adminLeg"></div>
     </div>
   </div>
-  <div class="vsfd-credit" id="adminCredit">✍️ <strong>Nguyễn Duy Ka</strong>, Phòng Kinh tế xã Tây Trà Bồng &nbsp;|&nbsp; 📱 <strong>0917.921.999</strong></div>
+  <div class="vsfd-credit" id="adminCredit">✍️ <strong>Nguyễn Duy Ka</strong>, Phòng Văn hóa - Xã hội xã Trà Bồng &nbsp;|&nbsp; 📱 <strong>0917.921.999</strong></div>
 </div>
 
 <div id="tvScreen">
@@ -315,7 +318,7 @@
   <div class="tv-gc">
     <div class="tv-gc-inner">
       <div class="tv-gc-t" id="tvGcNote">📋 <strong>Ghi chú:</strong> Ngoài thời gian đã bố trí, các đồng chí Lãnh đạo xã Tây Trà Bồng xử lý công việc tại cơ quan.</div>
-      <div class="tv-gc-credit" id="tvGcCredit">✍️ <strong>Nguyễn Duy Ka</strong>, Phòng Kinh tế xã Tây Trà Bồng &nbsp;|&nbsp; 📱 <strong>0917.921.999</strong></div>
+      <div class="tv-gc-credit" id="tvGcCredit">✍️ <strong>Nguyễn Duy Ka</strong>, Phòng Văn hóa - Xã hội xã Trà Bồng &nbsp;|&nbsp; 📱 <strong>0917.921.999</strong></div>
     </div>
   </div>
   <div class="tv-ticker"><div class="tv-tick-in" id="tvTicker"></div></div>
