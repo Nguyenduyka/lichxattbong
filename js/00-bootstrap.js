@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded',function(){
   var _safeDv = (typeof esc === 'function') ? esc(ORG_CONFIG.donVi) : ORG_CONFIG.donVi;
   var _safeSdt= (typeof esc === 'function') ? esc(ORG_CONFIG.soDienThoai) : ORG_CONFIG.soDienThoai;
   var _safeTen= (typeof esc === 'function') ? esc(ORG_CONFIG.tenCoQuan) : ORG_CONFIG.tenCoQuan;
-  var credit='✍️ <strong>'+_safeNg+'</strong>, Phòng Kinh tế '+_safeDv+' &nbsp;|&nbsp; 📱 <strong>'+_safeSdt+'</strong>';
+  var credit='✍️ <strong>'+_safeNg+'</strong>, Phòng Văn hóa - Xã hội xã Trà Bồng &nbsp;|&nbsp; 📱 <strong>'+_safeSdt+'</strong>';
   ['vsCredit','adminCredit','tvGcCredit'].forEach(function(id){
     var el=document.getElementById(id);
     if(el) el.innerHTML=credit;

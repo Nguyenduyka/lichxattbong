@@ -19,7 +19,7 @@ const ORG_CONFIG = {
   tenNgan:        'Xã Tây Trà Bồng',             // Tên ngắn (không có UBND)
   capCoQuan:      'HỆ THỐNG QUẢN LÝ LỊCH LÀM VIỆC SỐ',            // Cấp cơ quan
   nguoiPhuTrach:  'Nguyễn Duy Ka',               // Người phụ trách
-  chucVu:         'Chuyên viên Phòng Kinh tế',   // Chức vụ
+  chucVu:         'Chuyên viên Phòng Văn hóa - Xã hội xã Trà Bồng',   // Chức vụ
   donVi:          'xã Tây Trà Bồng',             // Đơn vị
   diaDanh:        'Tây Trà Bồng',                // Địa danh ký (không có xã)
   soDienThoai:    '0917.921.999',                 // SĐT
@@ -431,7 +431,7 @@ return;}
 
 async function _loadViewerData(){
   if(!fbDb)return;
-  // UID viewer đọc từ subdomain (tendonvi.lichlamviec.com.vn) qua getViewerUid().
+  // UID viewer đọc từ subdomain (tendonvi.taytrabong.gov.vn) qua getViewerUid().
   // Nếu subdomain chưa có trong map tĩnh, hỏi Firebase subdomain_map/{slug} (động).
   // Cách này cho phép thêm đơn vị mới chỉ bằng 1 record Firebase, không sửa code.
   let uid = getViewerUid();
